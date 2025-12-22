@@ -19,8 +19,18 @@ async function register(request, reply)
 
 	if (!result.success)
 	{
-		if (result.reason === "USER_EXIST")
-			return reply.status(400).send({ error: "user already exists, change your infos or try to login." });
+		let errmsg = "register error";
+
+		if (result.reason === "BAD_EMAIL_FORMAT")
+			errmsg = "bad email format.";
+	
+		else if (result.reason === "BAD_NICK_FORMAT")
+			errmsg = "bad nickname format. Need to use only alphanumeric characters.";
+
+		else if (result.reason === "USER_EXIST")
+			errmsg = "user already exists, change your infos or try to login.";
+		
+		return reply.status(400).send({ error: errmsg });
 	}
 
 	return { ok: true }; // result for the front
