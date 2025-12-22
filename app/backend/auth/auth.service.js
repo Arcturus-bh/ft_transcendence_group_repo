@@ -4,7 +4,6 @@ const bcrypt = require("bcrypt");
 
 function isAlphaNum(str)
 {
-    let len = str.length;
     for (const c of str)
     {
         if (!((c >= 'a' && c <= 'z') || (c >= 'A' && c <= 'Z') || (c >= '0' && c <= '9' )))
