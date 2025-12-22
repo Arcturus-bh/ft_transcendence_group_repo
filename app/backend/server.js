@@ -88,12 +88,12 @@ async function start() {
 	// });
 
 	// Lancer serveur
-	fastify.listen({ port: 3000, host: "0.0.0.0" }, (err) => {
+	fastify.listen({ port: 3001, host: "0.0.0.0" }, (err) => {
 		if (err) {
 			fastify.log.error(err);
 			process.exit(1);
 		}
-		console.log("Backend running on http://localhost:3000");
+		console.log("Backend running on http://localhost:3001");
 	});
 }
 

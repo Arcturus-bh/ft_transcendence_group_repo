@@ -1,14 +1,15 @@
 import React, { useEffect, useMemo, useRef, useState } from "react";
 
-const AUTH_KEY = "fake_token";
-const LOGIN_KEY = "fake_login";
+const LOGIN_KEY = "auth_login";
+const AUTH_KEY = "auth_token";
 
 /* ================================================================================= */
 /* ================================================================================= */
 /* =================================== AUTH ======================================== */
 /* ================================================================================= */
 /* ================================================================================= */
-function useFakeAuth() {
+function useAuth() {
+  
   const [isAuthed, setIsAuthed] = useState(false);
   const [login, setLogin] = useState("");
 
@@ -21,12 +22,13 @@ function useFakeAuth() {
     }
   }, []);
 
-  const signIn = (loginValue) => {
-    localStorage.setItem(AUTH_KEY, "dev-token");
-    localStorage.setItem(LOGIN_KEY, loginValue || "player");
+  const signIn = (loginValue, token) => {
+    localStorage.setItem(AUTH_KEY, token);
+    localStorage.setItem(LOGIN_KEY, loginValue);
     setIsAuthed(true);
-    setLogin(loginValue || "player");
+    setLogin(loginValue);
   };
+
 
   const signOut = () => {
     localStorage.removeItem(AUTH_KEY);
@@ -43,22 +45,104 @@ function useFakeAuth() {
 /* ================================================================================= */
 /* ================================================================================= */
 export default function App() {
-  const { isAuthed, login, signIn, signOut } = useFakeAuth();
-
+  const { isAuthed, login, signIn, signOut } = useAuth();
+  
   const [page, setPage] = useState("home");
   const [showChat, setShowChat] = useState(false);
-
-  const [authMode, setAuthMode] = useState(null);
-
+  
   const [loginInput, setLoginInput] = useState("");
   const [passwordInput, setPasswordInput] = useState("");
-
+  
+  
+  const [authMode, setAuthMode] = useState(null);
+  
   const bgSrc = useMemo(() => "/images/enter.jpg", []);
-
+  
   const [privacy, setPrivacy] = useState("privacy");
   const [terms, setTerms] = useState("terms");
-
+  
   const [avatar, setAvatar] = useState(null);
+  
+  const handleSubmitLogin = async (e) => {
+  e.preventDefault();
+
+  try {
+    const res = await fetch("http://localhost:3001/auth/login", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        username: loginInput,
+        password: passwordInput,
+      }),
+    });
+
+    let data = {};
+    if (res.headers.get("content-type")?.includes("application/json")) {
+      data = await res.json();
+    }
+
+    if (!res.ok) {
+      alert(data.error || "Erreur de connexion");
+      return;
+    }
+
+    signIn(data.username, data.token);
+    setAuthMode(null);
+    setPage("dashboard");
+
+  } catch (err) {
+    alert("Impossible de contacter le serveur");
+  }
+  };
+
+  const handleSubmitSub = async (e) => {
+  e.preventDefault();
+
+  try {
+    const res = await fetch("http://localhost:3001/auth/register", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        username: loginInput,
+        password: passwordInput,
+      }),
+    });
+    
+    let data = {};
+    if (res.headers.get("content-type")?.includes("application/json")) {
+      data = await res.json();
+    }
+    
+    if (!res.ok) {
+      alert(data.error || "Erreur d'inscription");
+      return;
+    }
+    
+    alert("Compte créé, vous pouvez vous connecter");
+    setLoginInput("");
+    setPasswordInput("");
+    setAuthMode("login");
+
+    } catch (err) {
+      alert("Impossible de contacter le serveur");
+    }
+  };
+
+  const handleAvatarChange = (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+
+    const reader = new FileReader();
+    reader.onload = () => {
+      localStorage.setItem("avatar", reader.result);
+      setAvatar(reader.result);
+    };
+    reader.readAsDataURL(file);
+  };
 
   useEffect(() => {
     if (isAuthed) setPage("dashboard");
@@ -123,106 +207,7 @@ function GameCanvas() {
     />
   );
 }
-/*==============================================================================================
-================================================================================================
-========================================= SHOW LOG =============================================
-================================================================================================
-================================================================================================*/
-const handleSubmitLogin = async (e) => {
-  e.preventDefault();
 
-  try {
-    const res = await fetch("http://localhost:3001/auth/login", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({
-        username: loginInput,
-        password: passwordInput,
-      }),
-    });
-
-    const data = await res.json();
-
-    if (!res.ok) {
-      alert(data.error || "Erreur de connexion");
-      return;
-    }
-
-    // token envoyé par le backend
-    localStorage.setItem(AUTH_KEY, data.token);
-    localStorage.setItem(LOGIN_KEY, data.username);
-
-    signIn(data.username);
-    setAuthMode(null);
-    setPage("dashboard");
-  } catch (err) {
-    alert("Impossible de contacter le serveur");
-  }
-};
-// const handleSubmitLogin = (e) => {
-//   e.preventDefault();
-
-//   const username = loginInput.trim() || "player";
-
-//   // fake auth
-//   localStorage.setItem(AUTH_KEY, "dev-token");
-//   localStorage.setItem(LOGIN_KEY, username);
-
-//   signIn(username);
-//   setAuthMode(null);
-//   setPage("dashboard");
-// };
-/*==============================================================================================
-================================================================================================
-===================================== SHOW SUBSCRIBE ===========================================
-================================================================================================
-================================================================================================*/
-const handleSubmitSub = async (e) => {
-  e.preventDefault();
-
-  try {
-    const res = await fetch("http://localhost:3001/auth/register", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({
-        username: loginInput,
-        password: passwordInput,
-      }),
-    });
-
-    const data = await res.json();
-
-    if (!res.ok) {
-      alert(data.error || "Erreur d'inscription");
-      return;
-    }
-
-    alert("Compte créé, vous pouvez vous connecter");
-    setAuthMode("login");
-  } catch (err) {
-    alert("Impossible de contacter le serveur");
-  }
-};
-/*==============================================================================================
-================================================================================================
-====================================== HANDLE AVATAR ===========================================
-================================================================================================
-================================================================================================*/
-const handleAvatarChange = (e) => {
-  const file = e.target.files[0];
-  if (!file) return;
-
-  const reader = new FileReader();
-  reader.onload = () => {
-    localStorage.setItem("avatar", reader.result);
-    setAvatar(reader.result);
-  };
-  reader.readAsDataURL(file);
-};
 /*-------------------------------------------------------------------------------------------------
 ---------------------------------------------------------------------------------------------------
 ---------------------------------------------------------------------------------------------------
@@ -337,6 +322,12 @@ const handleAvatarChange = (e) => {
                     value={loginInput}
                     onChange={(e) => setLoginInput(e.target.value)}
                     placeholder="𝕃𝕆𝔾𝕀ℕ"
+                    className="px-3 py-2 rounded bg-gray-900/80 neon-border text-cyan-300"
+                  />
+                  <input
+                    value={EmailInput}
+                    onChange={(e) => setEmailInput(e.target.value)}
+                    placeholder="𝔼𝕄𝔸𝕀𝕃"
                     className="px-3 py-2 rounded bg-gray-900/80 neon-border text-cyan-300"
                   />
                   <input
