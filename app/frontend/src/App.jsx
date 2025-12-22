@@ -128,52 +128,52 @@ function GameCanvas() {
 ========================================= SHOW LOG =============================================
 ================================================================================================
 ================================================================================================*/
-// const handleSubmitLogin = async (e) => {
-//   e.preventDefault();
-
-//   try {
-//     const res = await fetch("http://localhost:3001/auth/login", {
-//       method: "POST",
-//       headers: {
-//         "Content-Type": "application/json",
-//       },
-//       body: JSON.stringify({
-//         username: loginInput,
-//         password: passwordInput,
-//       }),
-//     });
-
-//     const data = await res.json();
-
-//     if (!res.ok) {
-//       alert(data.error || "Erreur de connexion");
-//       return;
-//     }
-
-//     // token envoyé par le backend
-//     localStorage.setItem(AUTH_KEY, data.token);
-//     localStorage.setItem(LOGIN_KEY, data.username);
-
-//     signIn(data.username);
-//     setAuthMode(null);
-//     setPage("dashboard");
-//   } catch (err) {
-//     alert("Impossible de contacter le serveur");
-//   }
-// };
-const handleSubmitLogin = (e) => {
+const handleSubmitLogin = async (e) => {
   e.preventDefault();
 
-  const username = loginInput.trim() || "player";
+  try {
+    const res = await fetch("http://localhost:3001/auth/login", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        username: loginInput,
+        password: passwordInput,
+      }),
+    });
 
-  // fake auth
-  localStorage.setItem(AUTH_KEY, "dev-token");
-  localStorage.setItem(LOGIN_KEY, username);
+    const data = await res.json();
 
-  signIn(username);
-  setAuthMode(null);
-  setPage("dashboard");
+    if (!res.ok) {
+      alert(data.error || "Erreur de connexion");
+      return;
+    }
+
+    // token envoyé par le backend
+    localStorage.setItem(AUTH_KEY, data.token);
+    localStorage.setItem(LOGIN_KEY, data.username);
+
+    signIn(data.username);
+    setAuthMode(null);
+    setPage("dashboard");
+  } catch (err) {
+    alert("Impossible de contacter le serveur");
+  }
 };
+// const handleSubmitLogin = (e) => {
+//   e.preventDefault();
+
+//   const username = loginInput.trim() || "player";
+
+//   // fake auth
+//   localStorage.setItem(AUTH_KEY, "dev-token");
+//   localStorage.setItem(LOGIN_KEY, username);
+
+//   signIn(username);
+//   setAuthMode(null);
+//   setPage("dashboard");
+// };
 /*==============================================================================================
 ================================================================================================
 ===================================== SHOW SUBSCRIBE ===========================================
