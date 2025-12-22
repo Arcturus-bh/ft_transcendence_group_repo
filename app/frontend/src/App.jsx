@@ -231,7 +231,7 @@ const handleAvatarChange = (e) => {
 ---------------------------------------------------------------------------------------------------
 -------------------------------------------------------------------------------------------------*/
 	return (
-		<div id="app" className="relative w-screen h-screen overflow-hidden">
+		<div id="app" className="w-screen h-screen overflow-hidden">
       
       <footer className="absolute top-[880px] left-1/2 -translate-x-1/2 text-xs text-cyan-300 neon-glitch">
         <button onClick={() => setPage("privacy")}>Privacy Policy</button>
@@ -239,20 +239,13 @@ const handleAvatarChange = (e) => {
         <button onClick={() => setPage("terms")}>Terms of Service</button>
       </footer>
 
-        style={{
-          backgroundImage: page !== "game" ? `url(${bgSrc})` : "none",
-          backgroundSize: "cover",
-          backgroundPosition: "center",
-          backgroundRepeat: "no-repeat",
-        }}
 
-      {/* <img
+      <img
         src={bgSrc}
         className="absolute inset-0 w-full h-full object-cover z-0 pointer-events-none"
         alt=""
-      /> */}
+      />
 
-      <div className="relative z-10 w-full h-full">
         {isAuthed && (
           <button
             className="neon-glitch absolute text-2xl px-1 py-1 top-5 left-5 z-[9999] bg-transparent neon-border"
@@ -544,6 +537,5 @@ const handleAvatarChange = (e) => {
         )}
 
       </div>
-  </div>
     );
 }
