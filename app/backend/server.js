@@ -1,100 +1,62 @@
-// import { Chat } from "./ws/chat.ts";
-const { registerUser, loginUser } = require("./auth/auth.service");
-
 const Fastify = require("fastify");
+const cors = require("@fastify/cors");
 const websocketPlugin = require("@fastify/websocket");
 
-// chat: Chat;
+const { registerUser, loginUser } = require("./auth/auth.service");
 
+async function register(request, reply) {
+  const { email, password, nickname } = request.body;
 
-async function register(request, reply)
-{
-	const { email, password, nickname } = request.body;
+  if (!email || !password || !nickname) {
+    return reply.status(400).send({ error: "missing field" });
+  }
 
-	if (!email || !password || !nickname) {
-		return reply.status(400).send({ error: "missing field" });
-	}
+  const result = await registerUser(email, password, nickname);
 
-	const result = await registerUser(email, password, nickname);
+  if (!result.success && result.reason === "USER_EXIST") {
+    return reply
+      .status(400)
+      .send({ error: "user already exists, change your infos or try to login." });
+  }
 
-	if (!result.success)
-	{
-		if (result.reason === "USER_EXIST")
-			return reply.status(400).send({ error: "user already exists, change your infos or try to login." });
-	}
-
-	return { ok: true }; // result for the front
+  return { ok: true };
 }
 
-async function login(request, reply)
-{
-	const { email, password } = request.body;
+async function login(request, reply) {
+  const { email, password } = request.body;
 
-	if (!email || !password) {
-		return reply.status(400).send({ error: "missing field" });
-	}
+  if (!email || !password) {
+    return reply.status(400).send({ error: "missing field" });
+  }
 
-	const result = await loginUser(email, password);
+  const result = await loginUser(email, password);
 
-	if (!result.success)
-	{
-		// it's the same error code, but I let it here if I had other errors leter 
-		if (result.reason === "BAD_PASSWORD" || result.reason === "NO_USER")
-			return reply.status(401).send({ error: "bad credentials" });
-	}
+  if (!result.success && (result.reason === "BAD_PASSWORD" || result.reason === "NO_USER")) {
+    return reply.status(401).send({ error: "bad credentials" });
+  }
 
-	return { ok: true }; // result for the front
+  // IMPORTANT: il faut renvoyer nickname depuis loginUser (voir plus bas)
+  return {
+    nickname: result.user.nickname,
+    token: "JWT_ICI",
+  };
 }
 
 async function start() {
-	const fastify = Fastify({ logger: true });
+  const fastify = Fastify({ logger: true });
 
-	// ENABLE WEBSOCKET
-	await fastify.register(websocketPlugin);
+  await fastify.register(cors, {
+    origin: true,
+    methods: ["GET", "POST", "OPTIONS"],
+  });
 
+  await fastify.register(websocketPlugin);
 
-	// LISTEN ROUTES
-	fastify.post("/auth/register", register);
-	fastify.post("/auth/login", login);
+  fastify.post("/auth/register", register);
+  fastify.post("/auth/login", login);
 
-	// Liste des clients connectés
-	// const clients = new Set();
-
-	// // Endpoint WebSocket
-	// fastify.get("/ws", { websocket: true }, (connection, req) => {
-	//   clients.add(connection);
-	//   chat.addClient("test");
-
-	//   // Broadcast connexion
-	//   for (const client of clients) {
-	//     client.socket.send(`A user connected. Total: ${clients.size}`);
-	//     chat.broadcastClientIn(client.getName());
-	//   }
-
-	//   // Message entrant
-	//   connection.socket.on("message", (message) => {
-	//     for (const client of clients) {
-	//       client.socket.send(`User says: ${message}`);
-	//     }
-	//   });
-
-	//   // Déconnexion
-	//   connection.socket.on("close", () => {
-	//     clients.delete(connection);
-	//     for (const client of clients) {
-	//       client.socket.send(`A user disconnected. Total: ${clients.size}`);
-	//     }
-	//   });
-	// });
-
-	// Lancer serveur
-	fastify.listen({ port: 3001, host: "0.0.0.0" }, (err) => {
-		if (err) {
-			fastify.log.error(err);
-			process.exit(1);
-		}
-		console.log("Backend running on http://localhost:3001");
-	});
+  await fastify.listen({ port: 3000, host: "0.0.0.0" });
+  console.log("Backend running on http://localhost:3000");
 }
 
 start();

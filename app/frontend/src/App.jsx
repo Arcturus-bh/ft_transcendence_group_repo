@@ -52,6 +52,7 @@ export default function App() {
   
   const [loginInput, setLoginInput] = useState("");
   const [passwordInput, setPasswordInput] = useState("");
+  const [emailInput, setEmailInput] = useState("");
   
   
   const [authMode, setAuthMode] = useState(null);
@@ -67,13 +68,13 @@ export default function App() {
   e.preventDefault();
 
   try {
-    const res = await fetch("http://localhost:3001/auth/login", {
+    const res = await fetch("http://localhost:3000/auth/login", {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
       },
       body: JSON.stringify({
-        username: loginInput,
+        email: emailInput,
         password: passwordInput,
       }),
     });
@@ -88,7 +89,7 @@ export default function App() {
       return;
     }
 
-    signIn(data.username, data.token);
+    signIn(data.nickname, data.token);
     setAuthMode(null);
     setPage("dashboard");
 
@@ -101,13 +102,14 @@ export default function App() {
   e.preventDefault();
 
   try {
-    const res = await fetch("http://localhost:3001/auth/register", {
+    const res = await fetch("http://localhost:3000/auth/register", {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
       },
       body: JSON.stringify({
-        username: loginInput,
+        email: emailInput,
+        nickname: loginInput,
         password: passwordInput,
       }),
     });
@@ -124,6 +126,7 @@ export default function App() {
     
     alert("Compte créé, vous pouvez vous connecter");
     setLoginInput("");
+    setEmailInput("");
     setPasswordInput("");
     setAuthMode("login");
 
@@ -288,7 +291,8 @@ function GameCanvas() {
                   <input
                     value={loginInput}
                     onChange={(e) => setLoginInput(e.target.value)}
-                    placeholder="𝕃𝕆𝔾𝕀ℕ"
+                    placeholder="𝔼𝕄𝔸𝕀𝕃"
+                    type="email"
                     className="px-3 py-2 rounded bg-gray-900/80 neon-border text-cyan-300"
                   />
                   <input
@@ -325,9 +329,10 @@ function GameCanvas() {
                     className="px-3 py-2 rounded bg-gray-900/80 neon-border text-cyan-300"
                   />
                   <input
-                    value={EmailInput}
+                    value={emailInput}
                     onChange={(e) => setEmailInput(e.target.value)}
                     placeholder="𝔼𝕄𝔸𝕀𝕃"
+                    type="email"
                     className="px-3 py-2 rounded bg-gray-900/80 neon-border text-cyan-300"
                   />
                   <input

@@ -28,21 +28,19 @@ async function registerUser(email, pass, nickname)
     return {success: true};
 }
 
-async function loginUser(email, pass)
-{
-    const existingUser = await prisma.user.findFirst({
-        where: { email },
-    });
+async function loginUser(email, pass) {
+  const existingUser = await prisma.user.findFirst({
+    where: { email },
+  });
 
-    if (!existingUser)
-        return {success: false, reason: "NO_USER" };
+  if (!existingUser)
+    return { success: false, reason: "NO_USER" };
 
-    const goodPassword = await bcrypt.compare(pass, existingUser.passwordHash);
-    
-    if (!goodPassword)
-        return { success: false, reason: "BAD_PASSWORD" };
+  const goodPassword = await bcrypt.compare(pass, existingUser.passwordHash);
+  if (!goodPassword)
+    return { success: false, reason: "BAD_PASSWORD" };
 
-    return { success: true };
+  return { success: true, user: existingUser };
 }
 
 module.exports = { registerUser, loginUser };
