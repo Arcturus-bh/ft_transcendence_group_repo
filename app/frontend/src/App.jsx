@@ -67,6 +67,7 @@ export default function App() {
   const handleSubmitLogin = async (e) => {
   e.preventDefault();
 
+
   try {
     const res = await fetch("http://localhost:3000/auth/login", {
       method: "POST",
@@ -289,8 +290,8 @@ function GameCanvas() {
                     𝕎𝔼𝕃ℂ𝕆𝕄𝔼 𝔹𝔸ℂ𝕂!
                   </h1>
                   <input
-                    value={loginInput}
-                    onChange={(e) => setLoginInput(e.target.value)}
+                    value={emailInput}
+                    onChange={(e) => setEmailInput(e.target.value)}
                     placeholder="𝔼𝕄𝔸𝕀𝕃"
                     type="email"
                     className="px-3 py-2 rounded bg-gray-900/80 neon-border text-cyan-300"
