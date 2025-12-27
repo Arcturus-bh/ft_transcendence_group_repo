@@ -142,7 +142,8 @@ export default function App() {
 
     const reader = new FileReader();
     reader.onload = () => {
-      localStorage.setItem("avatar", reader.result);
+      const key = 'avatar_${login}';
+      localStorage.setItem(key, reader.result);
       setAvatar(reader.result);
     };
     reader.readAsDataURL(file);
