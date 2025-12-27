@@ -3,9 +3,9 @@ const { registerUser, loginUser } = require("./auth/auth.service");
 
 const Fastify = require("fastify");
 const websocketPlugin = require("@fastify/websocket");
+const fs = require("fs");
 
 // chat: Chat;
-
 
 async function register(request, reply)
 {
@@ -57,7 +57,15 @@ async function login(request, reply)
 }
 
 async function start() {
-	const fastify = Fastify({ logger: true });
+
+	const fastify = Fastify({
+	logger: true,
+	https: {
+		key: fs.readFileSync("certs/key.pem"),
+		cert: fs.readFileSync("certs/cert.pem"),
+		},
+	});
+
 
 	// ENABLE WEBSOCKET
 	await fastify.register(websocketPlugin);
@@ -103,7 +111,7 @@ async function start() {
 			fastify.log.error(err);
 			process.exit(1);
 		}
-		console.log("Backend running on http://localhost:3000");
+		console.log("Backend running on https://localhost:3000");
 	});
 }
 
