@@ -273,7 +273,7 @@ export default function App() {
   return (
     <div id="app" className="w-screen h-screen">
 
-      <footer className="absolute top-[890px] left-1/2 -translate-x-1/2 text-xs text-cyan-300 neon-glitch z-50">
+      <footer className="absolute top-[880px] left-1/2 -translate-x-1/2 text-xs text-cyan-300 neon-glitch z-50">
         <Link to="/privacy">Privacy Policy</Link>
           {" | "}
         <Link to="/terms">Terms of Service</Link>
@@ -286,16 +286,19 @@ export default function App() {
       />
 
         {isAuthed && (
-          <button
-          className="neon-glitch fixed top-0 left-0 text-2xl px-1 py-1 z-[9999] bg-transparent neon-border"
-          data-text="|||"
-            onClick={() => setShowChat(v => !v)}
+          <div className="fixed top-4 right-4 z-[9999]">
+            <button
+              className="neon-glitch text-2xl px-2 py-1 bg-transparent neon-border"
+              data-text="|||"
+              onClick={() => setShowChat(v => !v)}
             >
-            |||
-          </button>
+              |||
+            </button>
+          </div>
         )}
+
         {showChat && (
-          <div className="fixed top-0 left-0 h-full w-[300px] bg-black/80 z-[9998] neon-border p-4">
+          <div className="fixed top-0 left-0 h-full w-[300px] bg-black/80 z-[10] neon-border p-4">
             <h2 className="mb-4 text-cyan-300">Users</h2>
 
             <ul className="space-y-2">
@@ -479,7 +482,7 @@ export default function App() {
           <div className="w-full h-full relative">
             <button
               className="absolute top-4 left-4 px-4 py-2 neon-border bg-gray-900/60 text-white"
-              onClick={() => navigate("/dashboard")}
+              onClick={() => navigate(-1)}
             >
               𝔹𝕒𝕔𝕜
             </button>
@@ -504,8 +507,8 @@ export default function App() {
                 ℙℝ𝕆𝔽𝕀𝕃𝔼
               </h1>
               <button
-                className="neon-glitch absolute text-2xl top-[50px] px-3 py-0 neon-border bg-gray-900/60"
-                onClick={() => navigate("/dashboard")}
+                className="neon-glitch absolute text-2xl top-[130px] px-3 py-0 neon-border bg-gray-900/60"
+                onClick={() => navigate(-1)}
                 data-text="𝔹𝕒𝕔𝕜">
                 𝔹𝕒𝕔𝕜
               </button>
@@ -513,7 +516,7 @@ export default function App() {
               <label
                 className="
                   absolute
-                  top-[230px]
+                  top-[320px]
                   text-xs
                   cursor-pointer
                   neon-border
@@ -536,15 +539,15 @@ export default function App() {
 
               <img
                 src={avatar || "/images/default-avatar.png"}
-                className="w-32 h-32 absolute top-[200px] rounded-full object-cover neon-border"
+                className="w-32 h-32 absolute top-[280px] rounded-full object-cover neon-border"
               />
 
-              <h1 className="neon-glitch absolute text-2xl top-[290px]"
+              <h1 className="neon-glitch absolute text-2xl top-[350px]"
                     data-text="Login">
                     Login
               </h1>
 
-              <h1 className="neon-glitch absolute font-bold font-mono text-3xl top-[300px]">
+              <h1 className="neon-glitch absolute z-30 font-bold font-mono text-3xl top-[370px]">
                 <span className="text-cyan-300">{login}</span>
               </h1>
             </div>
@@ -557,37 +560,62 @@ export default function App() {
   ====================================================================================== 
   ======================================================================================*/}
         <Route path="/privacy" element={
-          <div className="w-full h-full flex flex-col items-center justify-center bg-black/80 p-8 text-cyan-300">
+          <div className="fixed inset-0 flex flex-col items-center bg-black/80 p-8 pt-[200px] text-cyan-300 z-30">
             <h1 className="text-3xl mb-4 neon-glitch">Privacy Policy</h1>
-            <p className="max-w-3xl text-sm leading-relaxed">
-              This application is a student project developed as part of the 42 curriculum.
+            <p className="max-w-3xl text-sm leading-relaxed text-center">
+              This application is part of an educational project
               <br /><br />
-              We collect user data such as username, encrypted password, avatar, and game-related
-              information in order to provide authentication and gameplay features.
+              within the 42 curriculum.
               <br /><br />
-              Data is stored securely and never shared with third parties.
+              We collect only the information necessary
+              <br /><br />
+              to provide authentication and gameplay
+              <br /><br />
+              features, such as username, encrypted password,
+              <br /><br />
+              avatar, and game-related data.
+              <br /><br />
+              All data is stored securely and is not shared with third parties.
+              <br /><br />
+              This project is not intended for commercial use.
             </p>
-            <button className="mt-6 neon-border px-4 py-1" onClick={() => navigate("/")}>
+            <button className="mt-6 neon-border px-4 py-1"
+              onClick={() => navigate(-1)}
+              >
               Back
             </button>
           </div>
         }/>
+
 {/*=====================================================================================
   ======================================================================================
   =================================== TERMS OF SERVICE =================================
   ====================================================================================== 
   ======================================================================================*/}
+
         <Route path="/terms" element={
-          <div className="w-full h-full flex flex-col items-center justify-center bg-black/80 p-8 text-cyan-300">
+          <div className="fixed inset-0 flex flex-col items-center bg-black/80 p-8 pt-[200px] text-cyan-300 z-30">
             <h1 className="text-3xl mb-4 neon-glitch">Terms of Service</h1>
-            <p className="max-w-3xl text-sm leading-relaxed">
-              This application is part of an educational project within the 42 curriculum.
+            <p className="max-w-3xl text-sm leading-relaxed text-center">
+              This application is provided as part of an educational project
               <br /><br />
-              Users must not abuse the platform, cheat, or disrupt the service.
+              within the 42 curriculum.
               <br /><br />
-              The service is provided as is, without guarantees.
+              Users agree to use the platform respectfully
+              <br /><br />
+              and must not attempt to abuse, disrupt,
+              <br /><br />
+              or exploit the service.
+              <br /><br />
+              The application is provided “as is”,
+              <br /><br />
+              without any guarantees of availability,
+              <br /><br />
+              security, or performance.
             </p>
-            <button className="mt-6 neon-border px-4 py-1" onClick={() => navigate("/")}>
+            <button className="mt-6 neon-border px-4 py-1 relative z-[1001]"
+              onClick={() => navigate(-1)}
+              >
               Back
             </button>
           </div>
