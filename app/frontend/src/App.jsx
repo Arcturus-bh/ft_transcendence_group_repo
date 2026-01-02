@@ -270,6 +270,8 @@ export default function App() {
 /* =================================== HOME PAGE =================================== */
 /* ================================================================================= */
 /* ================================================================================= */
+
+/*꧁꧂⚤♂♀➪⏎⟳*/
   return (
     <div id="app" className="w-screen h-screen">
 
@@ -288,7 +290,7 @@ export default function App() {
         {isAuthed && (
           <div className="fixed top-4 right-4 z-[9999]">
             <button
-              className="neon-glitch text-2xl px-2 py-0 bg-transparent neon-border"
+              className="neon-glitch text-2xl px-2 py-0 bg-transparent rounded neon-border"
               data-text="✉"
               onClick={() => setShowChat(v => !v)}
             >
@@ -326,19 +328,19 @@ export default function App() {
               <div className="mt-[12vh] flex justify-center w-full">
                 <button
                   className="neon-glitch relative inline-block text-4xl bg-transparent border-0"
-                  data-text="ℂ𝕆ℕℕ𝔼ℂ𝕋𝕀𝕆ℕ⮩"
+                  data-text="ℂ𝕆ℕℕ𝔼ℂ𝕋𝕀𝕆ℕ➣"
                   onClick={() => setAuthMode("login")}
                 >
-                  ℂ𝕆ℕℕ𝔼ℂ𝕋𝕀𝕆ℕ⮩
+                  ℂ𝕆ℕℕ𝔼ℂ𝕋𝕀𝕆ℕ➣
                 </button>
               </div>
               <div className="mt-[1vh] flex justify-center w-full">
                 <button
                   className="neon-glitch relative inline-block text-4xl bg-transparent border-0"
-                  data-text="𝕊𝕌𝔹𝕊ℂℝ𝕀𝔹𝔼+"
+                  data-text="𝕊𝕌𝔹𝕊ℂℝ𝕀𝔹𝔼➢"
                   onClick={() => setAuthMode("register")}
                 >
-                  𝕊𝕌𝔹𝕊ℂℝ𝕀𝔹𝔼+
+                  𝕊𝕌𝔹𝕊ℂℝ𝕀𝔹𝔼➢
                 </button>
               </div>
 
@@ -351,8 +353,9 @@ export default function App() {
             {authMode === "login" && (
               <div className="mt-[2vh] bg-black/60 p-6 rounded-xl backdrop-blur-xl neon-border">
                 <form className="flex flex-col gap-4" onSubmit={handleSubmitLogin}>
-                  <h1 className="neon-glitch absolute left-[40px] px-0 py-0 text-xl text-cyan-300" data-text="𝕎𝔼𝕃ℂ𝕆𝕄𝔼 𝔹𝔸ℂ𝕂!">
-                    𝕎𝔼𝕃ℂ𝕆𝕄𝔼 𝔹𝔸ℂ𝕂!
+                  <h1 className="neon-glitch absolute left-[14px] px-0 py-0 text-xl text-cyan-300"
+                  data-text="⫷ 𝕎𝔼𝕃ℂ𝕆𝕄𝔼 𝔹𝔸ℂ𝕂 ⫸">
+                    ⫷ 𝕎𝔼𝕃ℂ𝕆𝕄𝔼 𝔹𝔸ℂ𝕂 ⫸
                   </h1>
                   <input
                     value={emailInput}
@@ -369,8 +372,9 @@ export default function App() {
                     className="px-3 py-2 rounded bg-gray-900/80 neon-border text-cyan-300"
                     autoComplete="current-password"
                   />
-                  <button type="submit" className="neon-glitch px-4 py-2 bg-gray-900/80 text-cyan-300 rounded neon-border">
-                    👾 𝔾𝕆 👾
+                  <button type="submit" className="neon-glitch px-0 py-0 bg-gray-900/80 text-cyan-300 rounded neon-border"
+                  data-text="⇧ 𝔾𝕆 ⇧">
+                    ⇧ 𝔾𝕆 ⇧
                   </button>
                 </form>
               </div>
@@ -385,8 +389,9 @@ export default function App() {
             {authMode === "register" && (
               <div className="mt-[2vh] bg-black/60 p-6 rounded-xl backdrop-blur-xl neon-border">
                 <form className="flex flex-col gap-4" onSubmit={handleSubmitSub}>
-                  <h1 className="neon-glitch absolute left-[70px] px-0 py-0 text-xl text-cyan-300" data-text="𝕎𝔼𝕃ℂ𝕆𝕄𝔼 !">
-                    𝕎𝔼𝕃ℂ𝕆𝕄𝔼 !
+                  <h1 className="neon-glitch absolute left-[102px] px-0 py-0 text-xl text-cyan-300"
+                  data-text="⫷ 𝕎𝔼𝕃ℂ𝕆𝕄𝔼 ⫸">
+                    ⫷ 𝕎𝔼𝕃ℂ𝕆𝕄𝔼 ⫸
                   </h1>
                   <input
                     value={loginInput}
@@ -408,10 +413,30 @@ export default function App() {
                     placeholder="ℙ𝔸𝕊𝕊𝕎𝕆ℝ𝔻"
                     className="px-3 py-2 rounded bg-gray-900/80 neon-border text-cyan-300"
                   />
-                  <button type="submit" className="neon-glitch px-4 py-2 bg-gray-900/80 text-cyan-300 rounded neon-border">
-                    👾 𝔾𝕆 👾
+                  <h1 className="neon-glitch absolute px-0 py-0 left-[2px] text-xl text-cyan-300" data-text="⚤ ℂℍ𝕆𝕆𝕊𝔼 𝕐𝕆𝕌ℝ 𝔾𝔼ℕ𝔻𝔼ℝ ⚤">
+                    ⚤ ℂℍ𝕆𝕆𝕊𝔼 𝕐𝕆𝕌ℝ 𝔾𝔼ℕ𝔻𝔼ℝ ⚤
+                  </h1>
+                  <div className="flex gap-4 justify-center">
+                    <button
+                      type="button"
+                      className="neon-glitch px-9 py-1 text-1xl bg-gray-900/80 text-cyan-300 rounded neon-border"
+                    >
+                      ♂ 𝕄𝔸𝕃𝔼 ♂
+                    </button>
+
+                    <button
+                      type="button"
+                      className="neon-glitch px-7 py-1 text-1xl bg-gray-900/80 text-cyan-300 rounded neon-border"
+                    >
+                      ♀ 𝔽𝔼𝕄𝔸𝕃𝔼 ♀
+                    </button>
+                  </div>
+                  <button type="submit" className="neon-glitch px-0 py-0 bg-gray-900/80 text-cyan-300 rounded neon-border"
+                  data-text="⇧ 𝔾𝕆 ⇧">
+                    ⇧ 𝔾𝕆 ⇧
                   </button>
                 </form>
+
               </div>
             )}
           </div>

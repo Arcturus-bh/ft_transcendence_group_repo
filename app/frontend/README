@@ -15,3 +15,6 @@ pour autoriser et dire que les key cert sont digne de confiance a ton navigateur
 
 sudo cp cert.pem /usr/local/share/ca-certificates/localhost.crt
 sudo update-ca-certificates
+
+
+⌨︎ ⚿ 🅧 ✯ ⇧ ⏎ ✘ ✔ ⚤ ♂ ♀ ➪ ➩ ➢ ➣ ✉ ⫸ ⫷
