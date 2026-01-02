@@ -288,11 +288,11 @@ export default function App() {
         {isAuthed && (
           <div className="fixed top-4 right-4 z-[9999]">
             <button
-              className="neon-glitch text-2xl px-2 py-1 bg-transparent neon-border"
-              data-text="|||"
+              className="neon-glitch text-2xl px-2 py-0 bg-transparent neon-border"
+              data-text="✉"
               onClick={() => setShowChat(v => !v)}
             >
-              |||
+              ✉
             </button>
           </div>
         )}
