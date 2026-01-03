@@ -7,4 +7,4 @@ sudo cp cert.pem /usr/local/share/ca-certificates/localhost.crt
 sudo update-ca-certificates
 
 
-⌨︎ ⚿ 🅧 ✯ ⇧ ⏎ ✘ ✔ ⚤ ♂ ♀ ➪ ➩ ➢ ➣ ✉ ⫸ ⫷ ☣
+⌨︎ ⚿ 🅧 ✯ ⇧ ⏎ ✘ ✔ ⚤ ♂ ♀ ➪ ➩ ➢ ➣ ✉ ⫸ ⫷ ☣ ♨

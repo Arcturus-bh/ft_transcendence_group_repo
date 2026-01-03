@@ -332,9 +332,18 @@ export default function App() {
           </div>
         )}
 
+{/*=====================================================================================
+  ======================================================================================
+  =================================== NOTIFICATION =====================================
+  ======================================================================================
+  ======================================================================================*/}
+
         {showChat && (
           <div className="fixed top-0 left-0 h-full w-[300px] bg-black/80 z-[10] neon-border p-4">
-            <h2 className="mb-4 text-cyan-300">Users</h2>
+            <h2 className="neon-glitch mb-6 text-cyan-300"
+              data-text="𝕌𝕊𝔼ℝ𝕊">
+              𝕌𝕊𝔼ℝ𝕊
+            </h2>
 
             <ul className="space-y-2">
               {users.map(u => (
@@ -347,7 +356,7 @@ export default function App() {
                     {u.online && (
                       <span className="w-2 h-2 rounded-full bg-green-400"></span>
                     )}
-                    <span className="text-white">{u.nickname}</span>
+                    <span className="text-cyan">{u.nickname}</span>
                   </button>
                 </li>
               ))}
@@ -355,28 +364,35 @@ export default function App() {
           </div>
         )}
 
+{/*=====================================================================================
+  ======================================================================================
+  ================================== SELECTED USER =====================================
+  ======================================================================================
+  ======================================================================================*/}
+
         {selectedUser && (
           <div
             className="fixed bg-black/90 neon-border rounded p-2 text-sm z-[1000]"
             style={{ top: contextPos.y, left: contextPos.x }}
             onMouseLeave={closeUserMenu}
           >
+
             <div className="text-cyan-300 mb-1 px-2">
               {selectedUser.nickname}
             </div>
 
             <button
               onClick={handleDM}
-              className="block w-full px-2 py-1 hover:bg-cyan-500/20 text-left"
+              className="block w-full px-2 py-1 hover:bg-cyan-500/20 text-left text-white"
             >
               ℙ𝕣𝕚𝕧𝕒𝕥𝕖 𝕞𝕖𝕤𝕤𝕒𝕘𝕖 ⌨︎
             </button>
 
             <button
               onClick={handleInvite}
-              className="block w-full px-2 py-1 hover:bg-cyan-500/20 text-left"
+              className="block w-full px-2 py-1 hover:bg-cyan-500/20 text-left text-white"
             >
-              𝕀𝕟𝕧𝕚𝕥𝕖 𝕥𝕠 𝕡𝕝𝕒𝕪
+              𝕀𝕟𝕧𝕚𝕥𝕖 𝕥𝕠 𝕡𝕝𝕒𝕪 ♨
             </button>
 
             <button
@@ -387,6 +403,12 @@ export default function App() {
             </button>
           </div>
         )}
+
+{/*=====================================================================================
+  ======================================================================================
+  ===================================== MAIN MENU ======================================
+  ====================================================================================== 
+  ======================================================================================*/}
 
         <Routes>
           <Route path="/" element={
@@ -492,6 +514,12 @@ export default function App() {
                     className="px-3 py-2 rounded bg-gray-900/80 neon-border text-cyan-300"
                   />
 
+{/*=====================================================================================
+  ======================================================================================
+  =============================== CHOOSE YOUR GENDER ===================================
+  ====================================================================================== 
+  ======================================================================================*/}
+
                   <h1 className="neon-glitch absolute px-0 py-0 left-[2px] text-xl text-cyan-300"
                     data-text="⚤ ℂℍ𝕆𝕆𝕊𝔼 𝕐𝕆𝕌ℝ 𝔾𝔼ℕ𝔻𝔼ℝ ⚤">
                     ⚤ ℂℍ𝕆𝕆𝕊𝔼 𝕐𝕆𝕌ℝ 𝔾𝔼ℕ𝔻𝔼ℝ ⚤
@@ -529,7 +557,7 @@ export default function App() {
 
 {/*=====================================================================================
   ======================================================================================
-  ======================================== HOME ========================================
+  ======================================== MENU ========================================
   ====================================================================================== 
   ======================================================================================*/}
 
@@ -566,7 +594,7 @@ export default function App() {
             <div className="mt-[3vh] flex flex-col gap-6 items-center">
               <button className="neon-glitch text-5xl bg-transparent border-0"
                 data-text="ℙ𝕃𝔸𝕐"
-                onClick={() => navigate("/game")}>
+                onClick={() => navigate("/play")}>
                 ℙ𝕃𝔸𝕐
               </button>
               <button className="neon-glitch text-5xl bg-transparent border-0"
@@ -580,15 +608,57 @@ export default function App() {
               </button>
             </div>
           </div>
-        } />
+        }/>
 
+{/*=====================================================================================
+  ======================================================================================
+  ===================================== CHOOSE GAME ====================================
+  ====================================================================================== 
+  ======================================================================================*/}
+
+        <Route path="/play" element={
+          <div className="relative w-full h-full flex flex-col items-center
+            justify-center gap-10">
+
+            <h1
+              className="neon-glitch text-5xl"
+              data-text="ℂℍ𝕆𝕆𝕊𝔼 𝔾𝔸𝕄𝔼"
+            >
+              ℂℍ𝕆𝕆𝕊𝔼 𝔾𝔸𝕄𝔼
+            </h1>
+
+            <button
+              className="neon-glitch text-4xl bg-transparent border-0"
+              data-text="ℙ𝕆ℕ𝔾"
+              onClick={() => navigate("/game/pong")}
+            >
+              ℙ𝕆ℕ𝔾
+            </button>
+
+            <button
+              className="neon-glitch text-4xl bg-transparent border-0"
+              data-text="𝔹𝕆ℕ𝕌𝕊"
+              onClick={() => navigate("/game/bonus")}
+            >
+              𝔹𝕆ℕ𝕌𝕊
+            </button>
+
+            <button
+              className="absolute top-3 left-4 px-1 py-1 neon-border bg-gray-900/60 text-cyan-300"
+              onClick={() => navigate(-1)}
+            >
+              𝔹𝔸ℂ𝕂
+            </button>
+
+          </div>
+        }/>
 {/*=====================================================================================
   ======================================================================================
   ====================================== GAME CANVA ====================================
   ====================================================================================== 
   ======================================================================================*/}
 
-        <Route path="/game" element={
+        <Route path="/game/pong" element={
           <div className="w-full h-full relative">
             <button
               className="absolute top-4 left-4 px-4 py-2 neon-border bg-gray-900/60 text-white"
@@ -601,7 +671,7 @@ export default function App() {
               <GameCanvas />
             </div>
           </div>
-        } />
+        }/>
 
 {/*=====================================================================================
   ======================================================================================
@@ -613,9 +683,10 @@ export default function App() {
           <div className="w-full h-full relative overflow-hidden">
             <div className="mt-[1vh] w-full h-full flex flex-col items-center">
               <h1 className="neon-glitch relative inline-block text-7xl"
-                  data-text="ℙℝ𝕆𝔽𝕀𝕃𝔼">
+                data-text="ℙℝ𝕆𝔽𝕀𝕃𝔼">
                 ℙℝ𝕆𝔽𝕀𝕃𝔼
               </h1>
+
               <button
                 className="neon-glitch absolute text-xl top-[125px] px-3 py-0
                 neon-border bg-gray-900/60"
@@ -651,15 +722,17 @@ export default function App() {
               <h1 className="neon-glitch absolute z-30 font-bold font-mono text-3xl top-[370px]">
                 <span className="text-cyan-300">{login}</span>
               </h1>
+
             </div>
           </div>
-        } />
+        }/>
 
 {/*=====================================================================================
   ======================================================================================
   ==================================== PRIVACY POLICY ==================================
   ====================================================================================== 
   ======================================================================================*/}
+
         <Route path="/privacy" element={
           <div className="fixed inset-0 flex flex-col items-center bg-black/80 p-8 pt-[200px]
             text-cyan-300 z-30">
