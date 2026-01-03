@@ -49,6 +49,10 @@ function useAuth() {
 /* ================================================================================= */
 
 export default function App() {
+
+  const [selectedUser, setSelectedUser] = useState(null);
+  const [contextPos, setContextPos] = useState({ x: 0, y: 0 });
+
   const { isAuthed, login, signIn, signOut } = useAuth();
   
   const navigate = useNavigate();
@@ -152,6 +156,35 @@ export default function App() {
         }
     };
 
+    //
+    const openUserMenu = (e, user) => {
+      const rect = e.currentTarget.getBoundingClientRect();
+      setContextPos({ x: rect.right + 8, y: rect.top });
+      setSelectedUser(user);
+    };
+
+    const closeUserMenu = () => setSelectedUser(null);
+
+    const handleDM = () => {
+      console.log("DM to", selectedUser.nickname);
+      closeUserMenu();
+    };
+
+    const handleInvite = () => {
+      console.log("Invite to game", selectedUser.nickname);
+      closeUserMenu();
+    };
+
+    const handleBlock = async () => {
+      await fetch(`https://localhost:3000/user/${selectedUser.id}/block`, {
+        method: "POST",
+        headers: {
+          Authorization: `Bearer ${localStorage.getItem("auth_token")}`,
+        },
+      });
+      closeUserMenu();
+    };
+
 /* ================================================================================= */
 /* ================================================================================= */
 /* ================================ HANDLE AVATAR ================================== */
@@ -208,9 +241,9 @@ export default function App() {
     .then(res => res.json())
     .then(setUsers);
   }, [showChat]);
-//
-//
-//
+  //
+  //
+  //
   const handleLogout = async () => {
     await fetch("https://localhost:3000/auth/logout", {
       method: "POST",
@@ -271,11 +304,11 @@ export default function App() {
 /* ================================================================================= */
 /* ================================================================================= */
 
-/*꧁꧂⚤♂♀➪⏎⟳*/
   return (
     <div id="app" className="w-screen h-screen">
 
-      <footer className="absolute top-[880px] left-1/2 -translate-x-1/2 text-xs text-cyan-300 neon-glitch z-50">
+      <footer className="absolute top-[880px] left-1/2 -translate-x-1/2 text-xs text-cyan-300
+        neon-glitch z-50">
         <Link to="/privacy">Privacy Policy</Link>
           {" | "}
         <Link to="/terms">Terms of Service</Link>
@@ -305,24 +338,64 @@ export default function App() {
 
             <ul className="space-y-2">
               {users.map(u => (
-                <li key={u.id} className="flex items-center gap-2">
-                  {u.online && (
-                    <span className="w-2 h-2 rounded-full bg-green-400"></span>
-                  )}
-                  <span className="text-white">{u.nickname}</span>
+                <li key={u.id}>
+                  <button
+                    onClick={(e) => openUserMenu(e, u)}
+                    className="w-full flex items-center gap-2 px-2 py-1
+                              rounded hover:bg-cyan-500/10 text-left"
+                  >
+                    {u.online && (
+                      <span className="w-2 h-2 rounded-full bg-green-400"></span>
+                    )}
+                    <span className="text-white">{u.nickname}</span>
+                  </button>
                 </li>
               ))}
             </ul>
           </div>
         )}
 
+        {selectedUser && (
+          <div
+            className="fixed bg-black/90 neon-border rounded p-2 text-sm z-[1000]"
+            style={{ top: contextPos.y, left: contextPos.x }}
+            onMouseLeave={closeUserMenu}
+          >
+            <div className="text-cyan-300 mb-1 px-2">
+              {selectedUser.nickname}
+            </div>
+
+            <button
+              onClick={handleDM}
+              className="block w-full px-2 py-1 hover:bg-cyan-500/20 text-left"
+            >
+              ℙ𝕣𝕚𝕧𝕒𝕥𝕖 𝕞𝕖𝕤𝕤𝕒𝕘𝕖 ⌨︎
+            </button>
+
+            <button
+              onClick={handleInvite}
+              className="block w-full px-2 py-1 hover:bg-cyan-500/20 text-left"
+            >
+              𝕀𝕟𝕧𝕚𝕥𝕖 𝕥𝕠 𝕡𝕝𝕒𝕪
+            </button>
+
+            <button
+              onClick={handleBlock}
+              className="block w-full px-2 py-1 hover:bg-red-500/30 text-left text-red-400"
+            >
+              𝔹𝕝𝕒𝕔𝕜 𝕝𝕚𝕤𝕥 ☣
+            </button>
+          </div>
+        )}
+
         <Routes>
           <Route path="/" element={
             <div className="w-full h-full flex flex-col items-center">
-              <div className="mt-[5vh]">
-                <h1 className="neon-glitch absolute left-1/2 -translate-x-1/2 bg-transparent border-0 text-7xl" 
-                    data-text="𝕋ℝ𝔸ℕ𝕊ℂ𝔼ℕ𝔻𝔸ℕℂ𝔼">
-                  𝕋ℝ𝔸ℕ𝕊ℂ𝔼ℕ𝔻𝔸ℕℂ𝔼
+              <div className="mt-[3vh]">
+                <h1 className="neon-glitch absolute left-1/2 -translate-x-1/2 bg-transparent
+                  border-0 text-7xl" 
+                    data-text="𝕋ℝ𝔸ℕ𝕊ℂ𝔼ℕ𝔻𝔼ℕℂ𝔼">
+                  𝕋ℝ𝔸ℕ𝕊ℂ𝔼ℕ𝔻𝔼ℕℂ𝔼
                 </h1>
               </div>
               <div className="mt-[12vh] flex justify-center w-full">
@@ -372,7 +445,8 @@ export default function App() {
                     className="px-3 py-2 rounded bg-gray-900/80 neon-border text-cyan-300"
                     autoComplete="current-password"
                   />
-                  <button type="submit" className="neon-glitch px-0 py-0 bg-gray-900/80 text-cyan-300 rounded neon-border"
+                  <button type="submit" className="neon-glitch px-0 py-0 bg-gray-900/80
+                    text-cyan-300 rounded neon-border"
                   data-text="⇧ 𝔾𝕆 ⇧">
                     ⇧ 𝔾𝕆 ⇧
                   </button>
@@ -389,16 +463,19 @@ export default function App() {
             {authMode === "register" && (
               <div className="mt-[2vh] bg-black/60 p-6 rounded-xl backdrop-blur-xl neon-border">
                 <form className="flex flex-col gap-4" onSubmit={handleSubmitSub}>
-                  <h1 className="neon-glitch absolute left-[102px] px-0 py-0 text-xl text-cyan-300"
-                  data-text="⫷ 𝕎𝔼𝕃ℂ𝕆𝕄𝔼 ⫸">
+
+                  <h1 className="neon-glitch absolute left-[95px] px-0 py-0 text-xl text-cyan-300"
+                    data-text="⫷ 𝕎𝔼𝕃ℂ𝕆𝕄𝔼 ⫸">
                     ⫷ 𝕎𝔼𝕃ℂ𝕆𝕄𝔼 ⫸
                   </h1>
+
                   <input
                     value={loginInput}
                     onChange={(e) => setLoginInput(e.target.value)}
                     placeholder="𝕃𝕆𝔾𝕀ℕ"
                     className="px-3 py-2 rounded bg-gray-900/80 neon-border text-cyan-300"
                   />
+
                   <input
                     value={emailInput}
                     onChange={(e) => setEmailInput(e.target.value)}
@@ -406,6 +483,7 @@ export default function App() {
                     type="email"
                     className="px-3 py-2 rounded bg-gray-900/80 neon-border text-cyan-300"
                   />
+
                   <input
                     value={passwordInput}
                     onChange={(e) => setPasswordInput(e.target.value)}
@@ -413,34 +491,40 @@ export default function App() {
                     placeholder="ℙ𝔸𝕊𝕊𝕎𝕆ℝ𝔻"
                     className="px-3 py-2 rounded bg-gray-900/80 neon-border text-cyan-300"
                   />
-                  <h1 className="neon-glitch absolute px-0 py-0 left-[2px] text-xl text-cyan-300" data-text="⚤ ℂℍ𝕆𝕆𝕊𝔼 𝕐𝕆𝕌ℝ 𝔾𝔼ℕ𝔻𝔼ℝ ⚤">
+
+                  <h1 className="neon-glitch absolute px-0 py-0 left-[2px] text-xl text-cyan-300"
+                    data-text="⚤ ℂℍ𝕆𝕆𝕊𝔼 𝕐𝕆𝕌ℝ 𝔾𝔼ℕ𝔻𝔼ℝ ⚤">
                     ⚤ ℂℍ𝕆𝕆𝕊𝔼 𝕐𝕆𝕌ℝ 𝔾𝔼ℕ𝔻𝔼ℝ ⚤
                   </h1>
+
                   <div className="flex gap-4 justify-center">
                     <button
                       type="button"
-                      className="neon-glitch px-9 py-1 text-1xl bg-gray-900/80 text-cyan-300 rounded neon-border"
-                    >
+                      className="neon-glitch px-9 py-0 text-1xl bg-gray-900/80 text-black-300
+                        rounded neon-border"
+                        data-text="♂ 𝕄𝔸𝕃𝔼 ♂">
                       ♂ 𝕄𝔸𝕃𝔼 ♂
                     </button>
 
                     <button
                       type="button"
-                      className="neon-glitch px-7 py-1 text-1xl bg-gray-900/80 text-cyan-300 rounded neon-border"
-                    >
+                      className="neon-glitch px-7 py-0 text-1xl bg-gray-900/80 text-black-300
+                      rounded neon-border"
+                      data-text="♀ 𝔽𝔼𝕄𝔸𝕃𝔼 ♀">
                       ♀ 𝔽𝔼𝕄𝔸𝕃𝔼 ♀
                     </button>
                   </div>
-                  <button type="submit" className="neon-glitch px-0 py-0 bg-gray-900/80 text-cyan-300 rounded neon-border"
-                  data-text="⇧ 𝔾𝕆 ⇧">
-                    ⇧ 𝔾𝕆 ⇧
+
+                  <button type="submit" className="neon-glitch px-0 py-0 text-xl
+                    bg-gray-900/80 text-cyan-300 rounded neon-border"
+                    data-text="⇧ 𝔾𝕆 ⇧">
+                      ⇧ 𝔾𝕆 ⇧
                   </button>
                 </form>
 
               </div>
             )}
           </div>
-/* === HOME END === */
         } />
 
 {/*=====================================================================================
@@ -453,10 +537,11 @@ export default function App() {
           <div className="w-full h-full flex flex-col items-center">
 
             <div className="mt-[5vh]">
-              <h1 className="neon-glitch absolute left-1/2 -translate-x-1/2 bg-transparent border-0 text-7xl" 
-                  data-text="𝕋ℝ𝔸ℕ𝕊ℂ𝔼ℕ𝔻𝔸ℕℂ𝔼"
+              <h1 className="neon-glitch absolute left-1/2 -translate-x-1/2 bg-transparent
+                  border-0 text-7xl" 
+                  data-text="𝕋ℝ𝔸ℕ𝕊ℂ𝔼ℕ𝔻𝔼ℕℂ𝔼"
                 >
-                𝕋ℝ𝔸ℕ𝕊ℂ𝔼ℕ𝔻𝔸ℕℂ𝔼
+                𝕋ℝ𝔸ℕ𝕊ℂ𝔼ℕ𝔻𝔼ℕℂ𝔼
               </h1>
             </div>
 
@@ -464,22 +549,22 @@ export default function App() {
               <span className="text-cyan-300">{login}</span>
             </div>
 
-            <div className="mt-[2vh] text-white">
+            <div className="text-white">
               <button
-                className="neon-glitch ml-4 px-3 py-0 neon-border bg-gray-0/0"
+                className="neon-glitch ml-1 px-3 py-0 neon-border bg-gray-0/0"
                 onClick={() => {
                   signOut();
                   setAuthUserId(null);
                   setAvatar(null);
                   navigate("/");
                 }}
-                data-text="𝕃𝕠𝕘𝕠𝕦𝕥">
-                𝕃𝕠𝕘𝕠𝕦𝕥
+                data-text="𝕃𝕆𝔾𝕆𝕌𝕋">
+                𝕃𝕆𝔾𝕆𝕌𝕋
               </button>
             </div>
 
-            <div className="mt-[7vh] flex flex-col gap-6 items-center">
-              <button className="neon-glitch text-5xl bg-transparent border-0" 
+            <div className="mt-[3vh] flex flex-col gap-6 items-center">
+              <button className="neon-glitch text-5xl bg-transparent border-0"
                 data-text="ℙ𝕃𝔸𝕐"
                 onClick={() => navigate("/game")}>
                 ℙ𝕃𝔸𝕐
@@ -509,7 +594,7 @@ export default function App() {
               className="absolute top-4 left-4 px-4 py-2 neon-border bg-gray-900/60 text-white"
               onClick={() => navigate(-1)}
             >
-              𝔹𝕒𝕔𝕜
+              𝔹𝔸ℂ𝕂
             </button>
 
             <div className="absolute inset-x-0 top-[10%] mx-auto w-[90vw] h-[80vh]">
@@ -532,26 +617,17 @@ export default function App() {
                 ℙℝ𝕆𝔽𝕀𝕃𝔼
               </h1>
               <button
-                className="neon-glitch absolute text-2xl top-[130px] px-3 py-0 neon-border bg-gray-900/60"
+                className="neon-glitch absolute text-xl top-[125px] px-3 py-0
+                neon-border bg-gray-900/60"
                 onClick={() => navigate(-1)}
-                data-text="𝔹𝕒𝕔𝕜">
-                𝔹𝕒𝕔𝕜
+                data-text="𝔹𝔸ℂ𝕂">
+                𝔹𝔸ℂ𝕂
               </button>
 
               <label
                 className="
-                  absolute
-                  top-[320px]
-                  text-xs
-                  cursor-pointer
-                  neon-border
-                  neon-glitch
-                  px-2
-                  py-1
-                  font-mono
-                  text-cyan-300
-                  hover:underline
-                "
+                  absolute top-[310px] text-xs cursor-pointer neon-border neon-glitch
+                  px-2 py-1 font-mono text-cyan-300 hover:underline"
               >
                 change avatar
                 <input
@@ -564,10 +640,10 @@ export default function App() {
 
               <img
                 src={avatar || "/images/default-avatar.png"}
-                className="w-32 h-32 absolute top-[280px] rounded-full object-cover neon-border"
+                className="w-32 h-32 absolute top-[270px] rounded-full object-cover neon-border"
               />
 
-              <h1 className="neon-glitch absolute text-2xl top-[350px]"
+              <h1 className="neon-glitch absolute text-2xl top-[340px]"
                     data-text="Login">
                     Login
               </h1>
@@ -585,7 +661,8 @@ export default function App() {
   ====================================================================================== 
   ======================================================================================*/}
         <Route path="/privacy" element={
-          <div className="fixed inset-0 flex flex-col items-center bg-black/80 p-8 pt-[200px] text-cyan-300 z-30">
+          <div className="fixed inset-0 flex flex-col items-center bg-black/80 p-8 pt-[200px]
+            text-cyan-300 z-30">
             <h1 className="text-3xl mb-4 neon-glitch">Privacy Policy</h1>
             <p className="max-w-3xl text-sm leading-relaxed text-center">
               This application is part of an educational project
@@ -607,7 +684,7 @@ export default function App() {
             <button className="mt-6 neon-border px-4 py-1"
               onClick={() => navigate(-1)}
               >
-              Back
+              𝔹𝔸ℂ𝕂
             </button>
           </div>
         }/>
@@ -619,7 +696,8 @@ export default function App() {
   ======================================================================================*/}
 
         <Route path="/terms" element={
-          <div className="fixed inset-0 flex flex-col items-center bg-black/80 p-8 pt-[200px] text-cyan-300 z-30">
+          <div className="fixed inset-0 flex flex-col items-center bg-black/80 p-8 pt-[200px]
+            text-cyan-300 z-30">
             <h1 className="text-3xl mb-4 neon-glitch">Terms of Service</h1>
             <p className="max-w-3xl text-sm leading-relaxed text-center">
               This application is provided as part of an educational project
@@ -641,7 +719,7 @@ export default function App() {
             <button className="mt-6 neon-border px-4 py-1 relative z-[1001]"
               onClick={() => navigate(-1)}
               >
-              Back
+              𝔹𝔸ℂ𝕂
             </button>
           </div>
         } />
