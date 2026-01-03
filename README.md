@@ -42,9 +42,42 @@ BDD
 if need to change something in the db (in app/backend/prisma/schema.prisma), you must do this to update changes in app/backend/:
     > rm prisma/dev.db
     > rm -rf prisma/migrations
-    > npx prisma migrate dev --name init
+    > npx prisma@6 migrate dev --name init
 
 if pb with db after that (e.g. impossible to register or login), reboot and update the db in container:
     > make re
     > docker exec -it back sh
-    > npx prisma migrate dev
+    > npx prisma@6 migrate dev
+
+
+Apres avoir git clone : 
+
+ETAPE 1 :
+
+    For WORK on this project:
+    -> cd /app/backend/
+    -> npm install
+    -> cd /app/frontend/
+    -> npm install
+
+    For RUN this project: 
+    -> make
+
+ETAPE 2 :
+
+    .env:
+    ->copier/coller le .env dans /backend/
+
+    init la DB 
+    -> npx prisma@6 migrate dev --name init
+
+
+ETAPE 3 :
+
+    copier/coller les key :
+    -> sudo cp cert.pem /usr/local/share/ca-certificates/localhost.crt
+
+ETAPE 4 (facultatif) :
+
+    autoriser les certs :
+    -> sudo update-ca-certificates
