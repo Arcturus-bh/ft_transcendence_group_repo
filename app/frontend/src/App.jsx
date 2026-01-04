@@ -69,10 +69,60 @@ export default function App() {
   const [emailInput, setEmailInput] = useState("");
   const [authUserId, setAuthUserId] = useState(
     localStorage.getItem(USER_ID_KEY));
-    
-  const [authMode, setAuthMode] = useState(null);
-  const bgSrc = useMemo(() => "/images/enter.jpg", []);
+  
+/* ================================================================================= */
+/* ================================================================================= */
+/* ============================ HANDLE BACKGROUND ================================== */
+/* ================================================================================= */
+/* ================================================================================= */
+
   const [avatar, setAvatar] = useState(null);
+
+  const [authMode, setAuthMode] = useState(null);
+
+  const DEFAULT_BG = "/images/abstract.png";
+
+  const [bgSrc, setBgSrc] = useState(DEFAULT_BG);
+
+  const changeBackground = (src) => {
+    if (!authUserId) return;
+
+    setBgSrc(src);
+    localStorage.setItem(`bg_${authUserId}`, src);
+  };
+
+  useEffect(() => {
+    if (!authUserId) {
+      setBgSrc(DEFAULT_BG);
+      return;
+    }
+
+    const savedBg = localStorage.getItem(`bg_${authUserId}`);
+    setBgSrc(savedBg || DEFAULT_BG);
+
+  }, [authUserId]);
+
+  const BACKGROUNDS = [
+  "/images/enter.jpg",
+  "/images/sun.png",
+  "/images/round.jpg",
+  "/images/cybersun.jpg",
+  "/images/black.webp",
+  "/images/mountain.jpg",
+  "/images/japan.jpg",
+  "/images/japan2.jpg",
+  "/images/car.jpg",
+  "/images/car2.jpg",
+  "/images/night.jpg",
+  "/images/rocket.jpg",
+  "/images/abstract.png",
+  "/images/dom.jpg",
+  "/images/setup.jpg",
+  "/images/setup2.jpg",
+  "/images/girlwork.jpg",
+  "/images/boywork.jpg",
+  "/images/vicecity.jpg",
+  ];
 
 /* ================================================================================= */
 /* ================================================================================= */
@@ -251,13 +301,15 @@ export default function App() {
         Authorization: `Bearer ${localStorage.getItem("auth_token")}`,
       },
     });
-
+    setAuthUserId(null);
+    setBgSrc(DEFAULT_BG);
     signOut();
     navigate("/");
   };
   //
   //
   //
+
 /* ================================================================================= */
 /* ================================================================================= */
 /* ===================================== CANVAS ==================================== */
@@ -356,7 +408,7 @@ export default function App() {
                     {u.online && (
                       <span className="w-2 h-2 rounded-full bg-green-400"></span>
                     )}
-                    <span className="text-cyan">{u.nickname}</span>
+                    <span className="text-white">{u.nickname}</span>
                   </button>
                 </li>
               ))}
@@ -377,7 +429,7 @@ export default function App() {
             onMouseLeave={closeUserMenu}
           >
 
-            <div className="text-cyan-300 mb-1 px-2">
+            <div className="text-cyan mb-1 px-2">
               {selectedUser.nickname}
             </div>
 
@@ -573,25 +625,21 @@ export default function App() {
               </h1>
             </div>
 
-            <div className="text-3xl mt-[9vh] text-white">
-              <span className="text-cyan-300">{login}</span>
+            <div className="text-3xl mt-[10vh] text-white z-30">
+              <span className="font-mono tracking-[-0.035em] text-cyan-300"
+              >{login}</span>
             </div>
 
-            <div className="text-white">
+            <div className="text-white mt-[2vh]">
               <button
-                className="neon-glitch ml-1 px-3 py-0 neon-border bg-gray-0/0"
-                onClick={() => {
-                  signOut();
-                  setAuthUserId(null);
-                  setAvatar(null);
-                  navigate("/");
-                }}
+                className="neon-glitch ml-1 px-3 py-0 neon-border bg-gray-900/60"
+                onClick={() => {handleLogout()}}
                 data-text="𝕃𝕆𝔾𝕆𝕌𝕋">
                 𝕃𝕆𝔾𝕆𝕌𝕋
               </button>
             </div>
 
-            <div className="mt-[3vh] flex flex-col gap-6 items-center">
+            <div className="mt-[5vh] flex flex-col gap-6 items-center">
               <button className="neon-glitch text-5xl bg-transparent border-0"
                 data-text="ℙ𝕃𝔸𝕐"
                 onClick={() => navigate("/play")}>
@@ -603,8 +651,9 @@ export default function App() {
                 ℙℝ𝕆𝔽𝕀𝕃𝔼
               </button>
               <button className="neon-glitch text-5xl bg-transparent border-0"
-                data-text="𝕆ℙ𝕋𝕀𝕆ℕ𝕊">
-                𝕆ℙ𝕋𝕀𝕆ℕ𝕊
+                data-text="ℂ𝕌𝕊𝕋𝕆𝕄𝕀ℤ𝔼"
+                onClick={() => navigate("/customize")}>
+                ℂ𝕌𝕊𝕋𝕆𝕄𝕀ℤ𝔼
               </button>
             </div>
           </div>
@@ -652,6 +701,48 @@ export default function App() {
 
           </div>
         }/>
+
+{/*=====================================================================================
+  ======================================================================================
+  ====================================== CUSTOM BG =====================================
+  ====================================================================================== 
+  ======================================================================================*/}
+
+        <Route path="/customize" element={
+          <div className="fixed inset-0 bg-black/80 z-30 flex flex-col items-center p-8">
+
+            <h1 className="neon-glitch text-5xl mb-[4vh] mt-[8vh]"
+              data-text="𝔹𝔸ℂ𝕂𝔾ℝ𝕆𝕌ℕ𝔻">
+              𝔹𝔸ℂ𝕂𝔾ℝ𝕆𝕌ℕ𝔻
+            </h1>
+
+            <div className="grid grid-cols-6 gap-6 mt-[8vh]">
+              {BACKGROUNDS.map((bg) => (
+                <button
+                  key={bg}
+                  onClick={() => changeBackground(bg)}
+                  className={`relative w-[110px] h-[60px] rounded-lg overflow-hidden neon-border
+                    ${bgSrc === bg ? "ring-2 ring-cyan-400" : ""}`}
+                >
+                  <img
+                    src={bg}
+                    className="w-full h-full object-cover"
+                    alt=""
+                  />
+                </button>
+              ))}
+            </div>
+
+            <button
+              className="mt-10 px-2 py-1 neon-border bg-gray-900/60 text-cyan-300"
+              onClick={() => navigate(-1)}
+            >
+              𝔹𝔸ℂ𝕂
+            </button>
+
+          </div>
+        }/>
+
 {/*=====================================================================================
   ======================================================================================
   ====================================== GAME CANVA ====================================
