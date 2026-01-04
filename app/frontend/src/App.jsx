@@ -56,7 +56,18 @@ export default function App() {
   const { isAuthed, login, signIn, signOut } = useAuth();
   
   const navigate = useNavigate();
-  // const [page, setPage] = useState("home");
+
+  const [notification, setNotification] = useState(null);
+  const notify = (message) => {
+    setNotification(message);
+  };
+
+  useEffect(() => {
+    if (!notification) return;
+
+    const t = setTimeout(() => setNotification(null), 2500);
+    return () => clearTimeout(t);
+  }, [notification]);
 
   const [users, setUsers] = useState([]);
   const [showChat, setShowChat] = useState(false);
@@ -150,7 +161,7 @@ export default function App() {
         }
 
         if (!res.ok) {
-          alert(data.error || "Erreur de connexion");
+          notify("Bad credentials");
           return;
         }
 
@@ -160,7 +171,7 @@ export default function App() {
         navigate("/dashboard");
 
       } catch (err) {
-        alert("Impossible de contacter le serveur");
+        notify("Error Serv");
       }
   };
 
@@ -191,18 +202,18 @@ export default function App() {
         }
 
         if (!res.ok) {
-          alert(data.error || "Erreur d'inscription");
+          notify("User already exist");
           return;
         }
         
-        alert("Compte créé, vous pouvez vous connecter");
+        notify("Compte créé, vous pouvez vous connecter");
         setLoginInput("");
         setEmailInput("");
         setPasswordInput("");
         setAuthMode("login");
 
         } catch (err) {
-          alert("Impossible de contacter le serveur");
+            notify("Error Serv");
         }
     };
 
@@ -358,9 +369,34 @@ export default function App() {
 
   return (
     <div id="app" className="w-screen h-screen">
+      
+      {notification && (
+        <div className="fixed inset-0 z-[99999] flex items-center justify-center">
 
-      <footer className="absolute top-[880px] left-1/2 -translate-x-1/2 text-xs text-cyan-300
-        neon-glitch z-50">
+          <div
+            className="absolute inset-0 bg-black/70"
+            onClick={() => setNotification(null)}
+          />
+
+          <div className="relative min-w-[300px] px-8 py-6
+            rounded-xl bg-black/90 neon-border text-center">
+
+            <p className="font-mono tracking-[-0.03em] text-white">
+              {notification}
+            </p>
+
+            <button
+              onClick={() => setNotification(null)}
+              className="neon-glitch mt-5 px-10 py-0 neon-border text-white"
+              data-text="𝕆𝕂">
+              𝕆𝕂
+            </button>
+          </div>
+        </div>
+      )}
+
+      <footer className="absolute top-[880px] left-1/2 -translate-x-1/2
+        text-xs text-cyan-300 neon-glitch z-50">
         <Link to="/privacy">Privacy Policy</Link>
           {" | "}
         <Link to="/terms">Terms of Service</Link>
