@@ -10,6 +10,7 @@ const USER_ID_KEY = "auth_user_id";
 /* =================================== AUTH ======================================== */
 /* ================================================================================= */
 /* ================================================================================= */
+
 function useAuth() {
   
   const [isAuthed, setIsAuthed] = useState(false);
@@ -42,6 +43,7 @@ function useAuth() {
 
   return { isAuthed, login, signIn, signOut };
 }
+
 /* ================================================================================= */
 /* ================================================================================= */
 /* ====================================== APP ====================================== */
@@ -74,6 +76,9 @@ export default function App() {
   
   const [privacy, setPrivacy] = useState("privacy");
   const [terms, setTerms] = useState("terms");
+
+  const [userTab, setUserTab] = useState("users"); // "users" | "friends"
+  const [friends, setFriends] = useState([]);
   
   const [loginInput, setLoginInput] = useState("");
   const [passwordInput, setPasswordInput] = useState("");
@@ -217,35 +222,6 @@ export default function App() {
         }
     };
 
-    //
-    const openUserMenu = (e, user) => {
-      const rect = e.currentTarget.getBoundingClientRect();
-      setContextPos({ x: rect.right + 8, y: rect.top });
-      setSelectedUser(user);
-    };
-
-    const closeUserMenu = () => setSelectedUser(null);
-
-    const handleDM = () => {
-      console.log("DM to", selectedUser.nickname);
-      closeUserMenu();
-    };
-
-    const handleInvite = () => {
-      console.log("Invite to game", selectedUser.nickname);
-      closeUserMenu();
-    };
-
-    const handleBlock = async () => {
-      await fetch(`https://localhost:3000/user/${selectedUser.id}/block`, {
-        method: "POST",
-        headers: {
-          Authorization: `Bearer ${localStorage.getItem("auth_token")}`,
-        },
-      });
-      closeUserMenu();
-    };
-
 /* ================================================================================= */
 /* ================================================================================= */
 /* ================================ HANDLE AVATAR ================================== */
@@ -320,6 +296,80 @@ export default function App() {
   //
   //
   //
+  useEffect(() => {
+    if (!showChat || userTab !== "users") return;
+
+    fetch("https://localhost:3000/users", {
+      headers: {
+        Authorization: `Bearer ${localStorage.getItem("auth_token")}`,
+      },
+    })
+      .then(res => res.json())
+      .then(setUsers);
+  }, [showChat, userTab]);
+
+  useEffect(() => {
+    if (!showChat || userTab !== "friends") return;
+
+    fetch("https://localhost:3000/friends", {
+      headers: {
+        Authorization: `Bearer ${localStorage.getItem("auth_token")}`,
+      },
+    })
+      .then(res => res.json())
+      .then(setFriends);
+  }, [showChat, userTab]);
+  //
+  //
+  //
+
+    const openUserMenu = (e, user) => {
+    const rect = e.currentTarget.getBoundingClientRect();
+    setContextPos({ x: rect.right + 8, y: rect.top });
+    setSelectedUser(user);
+  };
+
+  const closeUserMenu = () => setSelectedUser(null);
+
+  const handleDM = () => {
+    console.log("DM:", selectedUser.nickname);
+    closeUserMenu();
+  };
+
+  const handleInvite = () => {
+    console.log("Invite:", selectedUser.nickname);
+    closeUserMenu();
+  };
+
+  const handleAddFriend = async () => {
+    await fetch(`https://localhost:3000/friends/${selectedUser.id}`, {
+      method: "POST",
+      headers: {
+        Authorization: `Bearer ${localStorage.getItem("auth_token")}`,
+      },
+    });
+    closeUserMenu();
+  };
+
+  const handleRemoveFriend = async () => {
+    await fetch(`https://localhost:3000/friends/${selectedUser.id}`, {
+      method: "DELETE",
+      headers: {
+        Authorization: `Bearer ${localStorage.getItem("auth_token")}`,
+      },
+    });
+    closeUserMenu();
+  };
+
+  const handleBlock = async () => {
+    await fetch(`https://localhost:3000/user/${selectedUser.id}/block`, {
+      method: "POST",
+      headers: {
+        Authorization: `Bearer ${localStorage.getItem("auth_token")}`,
+      },
+    });
+    closeUserMenu();
+  };
 
 /* ================================================================================= */
 /* ================================================================================= */
@@ -425,16 +475,40 @@ export default function App() {
   =================================== NOTIFICATION =====================================
   ======================================================================================
   ======================================================================================*/}
-
         {showChat && (
-          <div className="fixed top-0 left-0 h-full w-[300px] bg-black/80 z-[10] neon-border p-4">
-            <h2 className="neon-glitch mb-6 text-cyan-300"
-              data-text="𝕌𝕊𝔼ℝ𝕊">
-              𝕌𝕊𝔼ℝ𝕊
-            </h2>
+          <div className="fixed top-0 left-0 h-full w-[300px]
+                          bg-black/80 z-[10] neon-border p-4">
 
+            {/* ONGLETS */}
+            <div className="flex gap-2 mb-4">
+              <button
+                onClick={() => setUserTab("users")}
+                className={`flex-1 py-1 neon-border ${
+                  userTab === "users"
+                    ? "text-cyan-300"
+                    : "text-gray-400"
+                }`}
+                data-text="𝕌𝕊𝔼ℝ𝕊"
+              >
+                𝕌𝕊𝔼ℝ𝕊
+              </button>
+
+              <button
+                onClick={() => setUserTab("friends")}
+                className={`flex-1 py-1 neon-border ${
+                  userTab === "friends"
+                    ? "text-cyan-300"
+                    : "text-gray-400"
+                }`}
+                data-text="𝔸𝕄𝕀𝕊"
+              >
+                𝔸𝕄𝕀𝕊
+              </button>
+            </div>
+
+            {/* LISTE */}
             <ul className="space-y-2">
-              {users.map(u => (
+              {(userTab === "users" ? users : friends).map(u => (
                 <li key={u.id}>
                   <button
                     onClick={(e) => openUserMenu(e, u)}
@@ -442,7 +516,7 @@ export default function App() {
                               rounded hover:bg-cyan-500/10 text-left"
                   >
                     {u.online && (
-                      <span className="w-2 h-2 rounded-full bg-green-400"></span>
+                      <span className="w-2 h-2 rounded-full bg-green-400" />
                     )}
                     <span className="text-white">{u.nickname}</span>
                   </button>
@@ -460,34 +534,57 @@ export default function App() {
 
         {selectedUser && (
           <div
-            className="fixed bg-black/90 neon-border rounded p-2 text-sm z-[1000]"
+            className="fixed bg-black/90 neon-border rounded p-2
+                      text-sm z-[1000]"
             style={{ top: contextPos.y, left: contextPos.x }}
             onMouseLeave={closeUserMenu}
           >
-
-            <div className="text-cyan mb-1 px-2">
+            <div className="text-cyan-300 px-2 mb-1">
               {selectedUser.nickname}
             </div>
 
             <button
               onClick={handleDM}
-              className="block w-full px-2 py-1 hover:bg-cyan-500/20 text-left text-white"
+              className="block w-full px-2 py-1
+                        hover:bg-cyan-500/20 text-left text-white"
             >
-              ℙ𝕣𝕚𝕧𝕒𝕥𝕖 𝕞𝕖𝕤𝕤𝕒𝕘𝕖 ⌨︎
+              Message privé ⌨︎
             </button>
 
             <button
               onClick={handleInvite}
-              className="block w-full px-2 py-1 hover:bg-cyan-500/20 text-left text-white"
+              className="block w-full px-2 py-1
+                        hover:bg-cyan-500/20 text-left text-white"
             >
-              𝕀𝕟𝕧𝕚𝕥𝕖 𝕥𝕠 𝕡𝕝𝕒𝕪 ♨
+              Inviter à jouer ♨
             </button>
+
+            {userTab === "users" && (
+              <button
+                onClick={handleAddFriend}
+                className="block w-full px-2 py-1
+                          hover:bg-green-500/20 text-left text-green-400"
+              >
+                Ajouter en ami +
+              </button>
+            )}
+
+            {userTab === "friends" && (
+              <button
+                onClick={handleRemoveFriend}
+                className="block w-full px-2 py-1
+                          hover:bg-red-500/30 text-left text-red-400"
+              >
+                Retirer des amis ✖
+              </button>
+            )}
 
             <button
               onClick={handleBlock}
-              className="block w-full px-2 py-1 hover:bg-red-500/30 text-left text-red-400"
+              className="block w-full px-2 py-1
+                        hover:bg-red-700/40 text-left text-red-500"
             >
-              𝔹𝕝𝕒𝕔𝕜 𝕝𝕚𝕤𝕥 ☣
+              Blacklist ☣
             </button>
           </div>
         )}
