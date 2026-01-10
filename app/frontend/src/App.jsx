@@ -54,6 +54,10 @@ export default function App() {
 
   const [selectedUser, setSelectedUser] = useState(null);
   const [contextPos, setContextPos] = useState({ x: 0, y: 0 });
+  
+  const wsRef = useRef(null);
+
+  const [friendRequests, setFriendRequests] = useState([]);
 
   const { isAuthed, login, signIn, signOut } = useAuth();
   
@@ -267,21 +271,9 @@ export default function App() {
   //
   //
   //
-  useEffect(() => {
-  if (!showChat) return;
 
-  fetch("https://localhost:3000/users", {
-    headers: {
-      Authorization: `Bearer ${localStorage.getItem("auth_token")}`,
-    },
-  })
-    .then(res => res.json())
-    .then(setUsers);
-  }, [showChat]);
-  //
-  //
-  //
   const handleLogout = async () => {
+    wsRef.current?.close();
     await fetch("https://localhost:3000/auth/logout", {
       method: "POST",
       headers: {
@@ -296,17 +288,6 @@ export default function App() {
   //
   //
   //
-  useEffect(() => {
-    if (!showChat || userTab !== "users") return;
-
-    fetch("https://localhost:3000/users", {
-      headers: {
-        Authorization: `Bearer ${localStorage.getItem("auth_token")}`,
-      },
-    })
-      .then(res => res.json())
-      .then(setUsers);
-  }, [showChat, userTab]);
 
   useEffect(() => {
     if (!showChat || userTab !== "friends") return;
@@ -322,6 +303,69 @@ export default function App() {
       })
       .catch(() => setFriends([]));
   }, [showChat, userTab]);
+  //
+  //
+  //
+
+  useEffect(() => {
+    if (!isAuthed) return;
+
+    const token = localStorage.getItem(AUTH_KEY);
+    if (!token) return;
+
+    fetch("https://localhost:3000/users", {
+      headers: { Authorization: `Bearer ${token}` },
+    })
+      .then((r) => r.json())
+      .then(setUsers)
+      .catch(() => {});
+
+    const ws = new WebSocket("wss://localhost:3000/ws", token);
+    wsRef.current = ws;
+
+    ws.onmessage = (event) => {
+      const msg = JSON.parse(event.data);
+      if (msg.type === "USERS_STATUS") {
+        setUsers((prev) =>
+          prev.map((u) => ({
+            ...u,
+            online: msg.onlineUsers.includes(u.id),
+          }))
+        );
+      }
+      if (msg.type === "FRIEND_REQUEST") {
+        setFriendRequests((prev) => {
+          if (prev.some((u) => u.id === msg.from.id)) return prev;
+          return [...prev, msg.from];
+        });
+      }
+
+      if (msg.type === "FRIEND_ACCEPTED") {
+        setFriends((prev) => {
+          if (prev.some((f) => f.id === msg.user.id)) return prev;
+          return [...prev, msg.user];
+        });
+
+        setFriendRequests((prev) =>
+          prev.filter((u) => u.id !== msg.user.id)
+        );
+      }
+
+      if (msg.type === "FRIEND_REFUSED") {
+        setFriendRequests((prev) =>
+          prev.filter((u) => u.id !== msg.userId)
+        );
+      }
+    };
+
+    ws.onclose = () => {
+      if (wsRef.current === ws) wsRef.current = null;
+    };
+
+    return () => {
+      ws.close();
+    };
+  }, [isAuthed]);
   //
   //
   //
@@ -342,6 +386,34 @@ export default function App() {
   const handleInvite = () => {
     console.log("Invite:", selectedUser.nickname);
     closeUserMenu();
+  };
+
+  const handleSendFriendRequest = async () => {
+    await fetch(`https://localhost:3000/friends/request/${selectedUser.id}`, {
+      method: "POST",
+      headers: {
+        Authorization: `Bearer ${localStorage.getItem("auth_token")}`,
+      },
+    });
+    closeUserMenu();
+  };
+
+  const handleAcceptFriend = async (userId) => {
+    await fetch(`https://localhost:3000/friends/accept/${userId}`, {
+      method: "POST",
+      headers: {
+        Authorization: `Bearer ${localStorage.getItem("auth_token")}`,
+      },
+    });
+  };
+
+  const handleRefuseFriend = async (userId) => {
+    await fetch(`https://localhost:3000/friends/refuse/${userId}`, {
+      method: "POST",
+      headers: {
+        Authorization: `Bearer ${localStorage.getItem("auth_token")}`,
+      },
+    });
   };
 
   const handleAddFriend = async () => {
@@ -481,54 +553,111 @@ export default function App() {
         {showChat && (
           <div className="fixed top-0 left-0 h-full w-[300px]
                           bg-black/80 z-[10] neon-border p-4">
+          <div className="flex gap-2 mb-4">
+            <button
+              onClick={() => setUserTab("users")}
+              className={`flex-1 py-1 neon-border ${
+                userTab === "users" ? "text-cyan-300" : "text-gray-400"
+              }`}
+              data-text="𝕌𝕊𝔼ℝ𝕊"
+            >
+              𝕌𝕊𝔼ℝ𝕊
+            </button>
 
-            {/* ONGLETS */}
-            <div className="flex gap-2 mb-4">
-              <button
-                type="button"
-                onClick={() => setUserTab("users")}
-                className={`flex-1 py-1 neon-border ${
-                  userTab === "users"
-                    ? "text-cyan-300"
-                    : "text-gray-400"
-                }`}
-                data-text="𝕌𝕊𝔼ℝ𝕊"
-              >
-                𝕌𝕊𝔼ℝ𝕊
-              </button>
+            <button
+              onClick={() => setUserTab("friends")}
+              className={`flex-1 py-1 neon-border ${
+                userTab === "friends" ? "text-cyan-300" : "text-gray-400"
+              }`}
+              data-text="𝔽ℝ𝕀𝔼ℕ𝔻𝕊"
+            >
+              𝔽ℝ𝕀𝔼ℕ𝔻𝕊
+            </button>
 
-              <button
-                onClick={() => setUserTab("friends")}
-                className={`flex-1 py-1 neon-border ${
-                  userTab === "friends"
-                    ? "text-cyan-300"
-                    : "text-gray-400"
-                }`}
-                data-text="𝔸𝕄𝕀𝕊"
-              >
-                𝔸𝕄𝕀𝕊
-              </button>
-            </div>
-
-            {/* LISTE */}
-            <ul className="space-y-2">
-              {(userTab === "users" ? users : friends || []).map(u => (
-                <li key={u.id}>
-                  <button
-                    onClick={(e) => openUserMenu(e, u)}
-                    className="w-full flex items-center gap-2 px-2 py-1
-                              rounded hover:bg-cyan-500/10 text-left"
-                  >
-                    {u.online && (
-                      <span className="w-2 h-2 rounded-full bg-green-400" />
-                    )}
-                    <span className="text-white">{u.nickname}</span>
-                  </button>
-                </li>
-              ))}
-            </ul>
+            <button
+              onClick={() => setUserTab("requests")}
+              className={`flex-1 py-1 neon-border ${
+                userTab === "requests" ? "text-cyan-300" : "text-gray-400"
+              }`}
+              data-text="ℝ𝔼ℚ𝕌𝔼𝕊𝕋𝕊"
+            >
+              ℝ𝔼ℚ𝕌𝔼𝕊𝕋𝕊
+              {friendRequests.length > 0 && (
+                <span className="ml-1 text-red-400">
+                  ●
+                </span>
+              )}
+            </button>
           </div>
-        )}
+
+        <ul className="space-y-2">
+          {userTab === "users" &&
+            users.map((u) => (
+              <li key={u.id}>
+                <button
+                  onClick={(e) => openUserMenu(e, u)}
+                  className="w-full flex items-center gap-2 px-2 py-1
+                            rounded hover:bg-cyan-500/10 text-left"
+                >
+                  {u.online && (
+                    <span className="w-2 h-2 rounded-full bg-green-400" />
+                  )}
+                  <span className="text-white">{u.nickname}</span>
+                </button>
+              </li>
+            ))}
+
+          {userTab === "friends" &&
+            friends.map((u) => (
+              <li key={u.id}>
+                <button
+                  onClick={(e) => openUserMenu(e, u)}
+                  className="w-full flex items-center gap-2 px-2 py-1
+                            rounded hover:bg-cyan-500/10 text-left"
+                >
+                  {u.online && (
+                    <span className="w-2 h-2 rounded-full bg-green-400" />
+                  )}
+                  <span className="text-white">{u.nickname}</span>
+                </button>
+              </li>
+            ))}
+
+          {userTab === "requests" &&
+            friendRequests.map((u) => (
+              <li
+                key={u.id}
+                className="flex items-center justify-between
+                          px-2 py-1 rounded hover:bg-cyan-500/10"
+              >
+                <span className="text-white">{u.nickname}</span>
+
+                <div className="flex gap-2">
+                  <button
+                    onClick={() => handleAcceptFriend(u.id)}
+                    className="text-green-400 hover:text-green-300"
+                  >
+                    ✔
+                  </button>
+
+                  <button
+                    onClick={() => handleRefuseFriend(u.id)}
+                    className="text-red-400 hover:text-red-300"
+                  >
+                    ✖
+                  </button>
+                </div>
+              </li>
+            ))}
+
+          {userTab === "requests" && friendRequests.length === 0 && (
+            <li className="text-gray-500 text-sm text-center mt-4">
+              No pending requests
+            </li>
+          )}
+        </ul>
+      </div>
+    )}
 
 {/*=====================================================================================
   ======================================================================================
@@ -552,7 +681,7 @@ export default function App() {
               className="block w-full px-2 py-1
                         hover:bg-cyan-500/20 text-left text-white"
             >
-              Message privé ⌨︎
+              Private message ⌨︎
             </button>
 
             <button
@@ -560,16 +689,16 @@ export default function App() {
               className="block w-full px-2 py-1
                         hover:bg-cyan-500/20 text-left text-white"
             >
-              Inviter à jouer ♨
+              Invite to play ♨
             </button>
 
             {userTab === "users" && (
               <button
-                onClick={handleAddFriend}
+                onClick={handleSendFriendRequest}
                 className="block w-full px-2 py-1
                           hover:bg-green-500/20 text-left text-green-400"
               >
-                Ajouter en ami +
+                Send a friend +
               </button>
             )}
 
@@ -579,7 +708,7 @@ export default function App() {
                 className="block w-full px-2 py-1
                           hover:bg-red-500/30 text-left text-red-400"
               >
-                Retirer des amis ✖
+                Remove friend ✖
               </button>
             )}
 
