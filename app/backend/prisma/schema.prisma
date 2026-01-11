@@ -30,8 +30,8 @@ model User {
 	friends			User[]  @relation("UserFriends")
 	friendsOf		User[]  @relation("UserFriends") // mandatory by prisma, must ignore it and dont use it
 
-	blocked			User[]  @relation("UserBlocked")
-	blockedBy		User[]  @relation("UserBlocked") // mandatory by prisma, must ignore it and dont use it
+	blockedUsers   Block[] @relation("UserBlocks")
+	blockedByUsers Block[] @relation("UserBlockedBy")
 
 	// --- Stats ---
 	wins			Int     @default(0) // initialized to 0 because it's a counter
@@ -60,4 +60,14 @@ model Friendship {
 	updatedAt  DateTime @updatedAt
 
 	@@unique([requesterId, receiverId])
+}
+
+model Block {
+  blockerId Int
+  blockedId Int
+
+  blocker User @relation("UserBlocks", fields: [blockerId], references: [id])
+  blocked User @relation("UserBlockedBy", fields: [blockedId], references: [id])
+
+  @@id([blockerId, blockedId])
 }

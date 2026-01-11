@@ -114,6 +114,17 @@ export default function App() {
     return () => clearTimeout(t);
   }, [notification]);
 
+  /* Handle chat of user */
+  const [activeChatUser, setActiveChatUser] = useState(null);
+  const [chatInput, setChatInput] = useState("");
+  const [messages, setMessages] = useState({});
+
+  /* FOR BLACKLIST */
+  const [blockedUsers, setBlockedUsers] = useState([]);
+
+  const isBlockedUser = (id) =>
+  blockedUsers.some(u => u.id === id);
+
 /* ================================================================================= */
 /* ================================================================================= */
 /* ============================ HANDLE BACKGROUND ================================== */
@@ -411,6 +422,25 @@ export default function App() {
   //
   //
   //
+  //BLACKLIST
+  useEffect(() => {
+    if (!showChat) return;
+
+    fetch("https://localhost:3000/user/blocked", {
+      headers: {
+        Authorization: `Bearer ${localStorage.getItem("auth_token")}`,
+      },
+    })
+      .then(res => res.json())
+      .then(data => {
+        setBlockedUsers(Array.isArray(data) ? data : []);
+      })
+      .catch(() => setBlockedUsers([]));
+  }, [showChat]);
+//
+//
+//
+
   const isFriend = (id) => friends.some(f => f.id === id);
   const isPending = (id) => friendRequests.some(r => r.id === id);
 
@@ -423,7 +453,7 @@ export default function App() {
   const closeUserMenu = () => setSelectedUser(null);
 
   const handleDM = () => {
-    console.log("DM:", selectedUser.nickname);
+    setActiveChatUser(selectedUser);
     closeUserMenu();
   };
 
@@ -479,16 +509,6 @@ export default function App() {
       },
     });
   };
-
-  // const handleAddFriend = async () => {
-  //   await fetch(`https://localhost:3000/friends/${selectedUser.id}`, {
-  //     method: "POST",
-  //     headers: {
-  //       Authorization: `Bearer ${localStorage.getItem("auth_token")}`,
-  //     },
-  //   });
-  //   closeUserMenu();
-  // };
 
   const handleRemoveFriend = async () => {
     await fetch(`https://localhost:3000/friends/${selectedUser.id}`, {
@@ -565,7 +585,7 @@ export default function App() {
         ctx.clearRect(0, 0, canvas.width, canvas.height);
         const w = canvas.clientWidth;
         const h = canvas.clientHeight;
-        ctx.fillStyle = "rgba(10, 4, 70, 1)";
+        ctx.fillStyle = "rgb(0, 0, 0)";
         ctx.fillRect(0, 0, w, h);
       };
       loop();
@@ -587,7 +607,7 @@ export default function App() {
 
   return (
     <div id="app" className="w-screen h-screen">
-      
+
       {notification && (
         <div className="fixed inset-0 z-[99999] flex items-center justify-center">
 
@@ -645,112 +665,167 @@ export default function App() {
   ======================================================================================*/}
         {showChat && (
           <div className="fixed top-0 left-0 h-full w-[300px]
-                          bg-black/80 z-[10] neon-border p-4">
-          <div className="flex gap-2 mb-4">
-            <button
-              onClick={() => setUserTab("users")}
-              className={`flex-1 py-1 neon-border ${
-                userTab === "users" ? "text-cyan-300" : "text-gray-400"
-              }`}
-              data-text="𝕌𝕊𝔼ℝ𝕊"
-            >
-              𝕌𝕊𝔼ℝ𝕊
-            </button>
+                          bg-black/80 z-[10] neon-border flex flex-col">
 
-            <button
-              onClick={() => setUserTab("friends")}
-              className={`flex-1 py-1 neon-border ${
-                userTab === "friends" ? "text-cyan-300" : "text-gray-400"
-              }`}
-              data-text="𝔽ℝ𝕀𝔼ℕ𝔻𝕊"
-            >
-              𝔽ℝ𝕀𝔼ℕ𝔻𝕊
-            </button>
+            {/* =============================================
+                ================= LIST MODE =================
+                ============================================= */}
 
-            <button
-              onClick={() => setUserTab("requests")}
-              className={`flex-1 py-1 neon-border ${
-                userTab === "requests" ? "text-cyan-300" : "text-gray-400"
-              }`}
-              data-text="ℝ𝔼ℚ𝕌𝔼𝕊𝕋𝕊"
-            >
-              ℝ𝔼ℚ𝕌𝔼𝕊𝕋𝕊
-              {friendRequests.length > 0 && (
-                <span className="ml-1 text-red-400">
-                  ●
-                </span>
-              )}
-            </button>
-          </div>
-
-        <ul className="space-y-2">
-          {userTab === "users" &&
-            users.map((u) => (
-              <li key={u.id}>
-                <button
-                  onClick={(e) => openUserMenu(e, u)}
-                  className="w-full flex items-center gap-2 px-2 py-1
-                            rounded hover:bg-cyan-500/10 text-left"
-                >
-                  {u.online && (
-                    <span className="w-2 h-2 rounded-full bg-green-400" />
-                  )}
-                  <span className="text-white">{u.nickname}</span>
-                </button>
-              </li>
-            ))}
-
-          {userTab === "friends" &&
-            friends.map((u) => (
-              <li key={u.id}>
-                <button
-                  onClick={(e) => openUserMenu(e, u)}
-                  className="w-full flex items-center gap-2 px-2 py-1
-                            rounded hover:bg-cyan-500/10 text-left"
-                >
-                  {u.online && (
-                    <span className="w-2 h-2 rounded-full bg-green-400" />
-                  )}
-                  <span className="text-white">{u.nickname}</span>
-                </button>
-              </li>
-            ))}
-
-          {userTab === "requests" &&
-            friendRequests.map((u) => (
-              <li
-                key={u.id}
-                className="flex items-center justify-between
-                          px-2 py-1 rounded hover:bg-cyan-500/10"
-              >
-                <span className="text-white">{u.nickname}</span>
-
-                <div className="flex gap-2">
+            {!activeChatUser && (<>
+                <div className="flex gap-2 mb-4 p-2">
                   <button
-                    onClick={() => handleAcceptFriend(u.id)}
-                    className="text-green-400 hover:text-green-300"
+                    onClick={() => setUserTab("users")}
+                    className={`flex-1 py-1 neon-border ${
+                      userTab === "users" ? "text-cyan-300" : "text-gray-400"
+                    }`}
                   >
-                    ✔
+                    𝕌𝕊𝔼ℝ𝕊
                   </button>
 
                   <button
-                    onClick={() => handleRefuseFriend(u.id)}
-                    className="text-red-400 hover:text-red-300"
+                    onClick={() => setUserTab("friends")}
+                    className={`flex-1 py-1 neon-border ${
+                      userTab === "friends" ? "text-cyan-300" : "text-gray-400"
+                    }`}
                   >
-                    ✖
+                    𝔽ℝ𝕀𝔼ℕ𝔻𝕊
+                  </button>
+
+                  <button
+                    onClick={() => setUserTab("requests")}
+                    className={`flex-1 py-1 neon-border ${
+                      userTab === "requests" ? "text-cyan-300" : "text-gray-400"
+                    }`}
+                  >
+                    ℝ𝔼ℚ𝕌𝔼𝕊𝕋
+                    {friendRequests.length > 0 && <span className="ml-1 text-red-400">●</span>}
                   </button>
                 </div>
-              </li>
-            ))}
 
-          {userTab === "requests" && friendRequests.length === 0 && (
-            <li className="text-gray-500 text-sm text-center mt-4">
-              No pending requests
-            </li>
-          )}
-        </ul>
-      </div>
-    )}
+            {/* =============================================
+                ================= USER LIST =================
+                ============================================= */}
+
+                <ul className="flex-1 overflow-y-auto space-y-2 px-2">
+                  {userTab === "users" &&
+                    users.map(u => (
+                      <li key={u.id}>
+                        <button
+                          onClick={(e) => openUserMenu(e, u)}
+                          className="w-full flex items-center gap-2 px-2 py-1
+                                    rounded hover:bg-cyan-500/10 text-left"
+                        >
+                          {u.online && <span className="w-2 h-2 rounded-full bg-green-400" />}
+                          <span className="text-white">{u.nickname}</span>
+                        </button>
+                      </li>
+                    ))}
+
+            {/* =============================================
+                ================ FRIEND LIST ================
+                ============================================= */}
+
+                  {userTab === "friends" &&
+                    friends.map(u => (
+                      <li key={u.id}>
+                        <button
+                          onClick={(e) => openUserMenu(e, u)}
+                          className="w-full flex items-center gap-2 px-2 py-1
+                                    rounded hover:bg-cyan-500/10 text-left"
+                        >
+                          {u.online && <span className="w-2 h-2 rounded-full bg-green-400" />}
+                          <span className="text-white">
+                            {u.nickname}
+                          </span>
+                        </button>
+                      </li>
+                    ))}
+
+            {/* =============================================
+                =============== REQUEST LIST ================
+                ============================================= */}
+
+                  {userTab === "requests" &&
+                    friendRequests.map(u => (
+                      <li key={u.id} className="flex justify-between px-2 py-1">
+                        <span className="text-white">
+                            {u.nickname}
+                        </span>
+                        <div className="flex gap-2">
+                          <button onClick={() => handleAcceptFriend(u.id)}
+                            className="text-green-400">
+                              ✓
+                          </button>
+                          <button onClick={() => handleRefuseFriend(u.id)}
+                            className="text-red-400">
+                              ✘
+                          </button>
+                        </div>
+                      </li>
+                    ))}
+                </ul>
+              </>
+            )}
+
+            {/* =============================================
+                ================= CHAT MODE =================
+                ============================================= */}
+
+            {activeChatUser && (<>
+                <div className="flex items-center gap-2 p-3 border-b border-cyan-500/30">
+                  <button
+                    className="text-cyan-300 text-sm"
+                    onClick={() => setActiveChatUser(null)}
+                  >
+                    ← 𝔹𝔸ℂ𝕂
+                  </button>
+                  <span className="text-white font-mono">
+                    {activeChatUser.nickname}
+                  </span>
+                </div>
+
+                <div className="flex-1 overflow-y-auto p-3 space-y-2">
+                  {(messages[activeChatUser.id] || []).map((msg, i) => (
+                    <div
+                      key={i}
+                      className={`max-w-[80%] px-3 py-1 rounded
+                          whitespace-pre-wrap break-words
+                        ${msg.from === "me"
+                          ? "ml-auto bg-cyan-600/30"
+                          : "mr-auto bg-gray-700/40"}`}
+                    >
+                      {msg.text}
+                    </div>
+                  ))}
+                </div>
+
+                <form
+                  className="p-3 border-t border-cyan-500/30 flex gap-2"
+                  onSubmit={(e) => {
+                    e.preventDefault();
+                    if (!chatInput.trim()) return;
+
+                    setMessages(prev => ({
+                      ...prev,
+                      [activeChatUser.id]: [
+                        ...(prev[activeChatUser.id] || []),
+                        { from: "me", text: chatInput }
+                      ]
+                    }));
+                    setChatInput("");
+                  }}
+                >
+                  <input
+                    value={chatInput}
+                    onChange={(e) => setChatInput(e.target.value)}
+                    className="flex-1 bg-black/60 text-white px-2 py-1 rounded neon-border"
+                  />
+                  <button className="text-cyan-300">➤</button>
+                </form>
+              </>
+            )}
+          </div>
+        )}
 
 {/*=====================================================================================
   ======================================================================================
@@ -769,28 +844,31 @@ export default function App() {
               {selectedUser.nickname}
             </div>
 
-            <button
-              onClick={handleDM}
-              className="block w-full px-2 py-1
-                        hover:bg-cyan-500/20 text-left text-white"
-            >
-              Private message ⌨︎
-            </button>
+            {!isBlockedUser(selectedUser.id) && (
+              <>
+                <button
+                  onClick={handleDM}
+                  className="block w-full px-2 py-1 hover:bg-cyan-500/20 text-left text-white"
+                >
+                  Private message ⌨︎
+                </button>
 
-            <button
-              onClick={handleInvite}
-              className="block w-full px-2 py-1
-                        hover:bg-cyan-500/20 text-left text-white"
-            >
-              Invite to play ♨
-            </button>
+                <button
+                  onClick={handleInvite}
+                  className="block w-full px-2 py-1 hover:bg-cyan-500/20 text-left text-white"
+                >
+                  Invite to play ♨
+                </button>
+              </>
+            )}
 
-            {userTab === "users" && !isFriend(selectedUser.id)
-              && !isPending(selectedUser.id) && (
+            {userTab === "users" &&
+            !isFriend(selectedUser.id) &&
+            !isPending(selectedUser.id) &&
+            !isBlockedUser(selectedUser.id) && (
               <button
                 onClick={handleSendFriendRequest}
-                className="block w-full px-2 py-1
-                          hover:bg-green-500/20 text-left text-green-400"
+                className="block w-full px-2 py-1 hover:bg-green-500/20 text-left text-green-400"
               >
                 Send friend +
               </button>
@@ -802,17 +880,55 @@ export default function App() {
                 className="block w-full px-2 py-1
                           hover:bg-red-500/30 text-left text-red-400"
               >
-                Remove friend ✖
+                Remove friend ✘
               </button>
             )}
 
-            <button
-              onClick={handleBlock}
-              className="block w-full px-2 py-1
-                        hover:bg-red-700/40 text-left text-red-500"
-            >
-              Blacklist ☣
-            </button>
+            {/* =============================================
+                ================ HANDLE BLOCK ===============
+                ============================================= */}
+
+            {!isBlockedUser(selectedUser.id) ? (
+              <button
+                onClick={async () => {
+                  await fetch(
+                    `https://localhost:3000/user/${selectedUser.id}/block`,
+                    {
+                      method: "POST",
+                      headers: {
+                        Authorization: `Bearer ${localStorage.getItem("auth_token")}`,
+                      },
+                    }
+                  );
+                  setBlockedUsers(prev => [...prev, selectedUser]);
+                  closeUserMenu();
+                }}
+                className="block w-full px-2 py-1 hover:bg-red-700/40 text-left text-red-500"
+              >
+                Blacklist ☣
+              </button>
+            ) : (
+              <button
+                onClick={async () => {
+                  await fetch(
+                    `https://localhost:3000/user/${selectedUser.id}/unblock`,
+                    {
+                      method: "POST",
+                      headers: {
+                        Authorization: `Bearer ${localStorage.getItem("auth_token")}`,
+                      },
+                    }
+                  );
+                  setBlockedUsers(prev =>
+                    prev.filter(u => u.id !== selectedUser.id)
+                  );
+                  closeUserMenu();
+                }}
+                className="block w-full px-2 py-1 hover:bg-green-600/30 text-left text-green-400"
+              >
+                Unblock ✔
+              </button>
+            )}
           </div>
         )}
 
@@ -1030,9 +1146,9 @@ export default function App() {
 
             <h1
               className="absolute top-[60px] left-1/2 -translate-x-1/2 neon-glitch text-5xl"
-              data-text="⊱ ℂℍ𝕆𝕆𝕊𝔼 𝔾𝔸𝕄𝔼 ⊰"
+              data-text="ℂℍ𝕆𝕆𝕊𝔼 𝔾𝔸𝕄𝔼"
             >
-              ⊱ ℂℍ𝕆𝕆𝕊𝔼 𝔾𝔸𝕄𝔼 ⊰
+              ℂℍ𝕆𝕆𝕊𝔼 𝔾𝔸𝕄𝔼
             </h1>
 
             <div className="absolute left-1/2 top-[260px] -translate-x-1/2">
@@ -1059,7 +1175,7 @@ export default function App() {
               className="absolute left-4 px-1 py-1 neon-border bg-gray-900/60 text-cyan-300"
               onClick={() => navigate(-1)}
             >
-              𝔹𝔸ℂ𝕂
+              ← 𝔹𝔸ℂ𝕂
             </button>
 
           </div>
@@ -1100,7 +1216,7 @@ export default function App() {
               className="mt-10 px-2 py-1 neon-border bg-gray-900/60 text-cyan-300"
               onClick={() => navigate(-1)}
             >
-              𝔹𝔸ℂ𝕂
+              ← 𝔹𝔸ℂ𝕂
             </button>
 
           </div>
@@ -1118,7 +1234,7 @@ export default function App() {
               className="absolute top-4 left-4 px-4 py-2 neon-border bg-gray-900/60 text-white"
               onClick={() => navigate(-1)}
             >
-              𝔹𝔸ℂ𝕂
+              ← 𝔹𝔸ℂ𝕂
             </button>
 
             <div className="absolute inset-x-0 top-[10%] mx-auto w-[90vw] h-[80vh]">
@@ -1145,8 +1261,8 @@ export default function App() {
                 className="neon-glitch absolute text-xl top-[125px] px-3 py-0
                 neon-border bg-gray-900/60"
                 onClick={() => navigate(-1)}
-                data-text="𝔹𝔸ℂ𝕂">
-                𝔹𝔸ℂ𝕂
+                data-text="← 𝔹𝔸ℂ𝕂">
+                ← 𝔹𝔸ℂ𝕂
               </button>
 
               <label
@@ -1211,7 +1327,7 @@ export default function App() {
             <button className="mt-6 neon-border px-4 py-1"
               onClick={() => navigate(-1)}
               >
-              𝔹𝔸ℂ𝕂
+              ← 𝔹𝔸ℂ𝕂
             </button>
           </div>
         }/>
@@ -1246,7 +1362,7 @@ export default function App() {
             <button className="mt-6 neon-border px-4 py-1 relative z-[1001]"
               onClick={() => navigate(-1)}
               >
-              𝔹𝔸ℂ𝕂
+              ← 𝔹𝔸ℂ𝕂
             </button>
           </div>
         } />

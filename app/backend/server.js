@@ -55,6 +55,13 @@ async function start() {
   await fastify.register(websocketPlugin);
 
   /* ===========================
+     CHAT
+     =========================== */
+
+  // const { Chat } = require("./ws/chat");
+  // const chat = new Chat();
+
+  /* ===========================
      HTTP AUTH
      =========================== */
 
@@ -180,6 +187,7 @@ async function start() {
       online: onlineIds.has(u.id),
     }));
   });
+
   /* ===========================
    FRIENDSHIPS
    =========================== */
@@ -187,10 +195,13 @@ async function start() {
   fastify.post("/friends/request/:userId", async (req, reply) => {
     const me = getUserIdFromAuth(req, reply);
     if (!me) return;
-
+    
     const targetId = Number(req.params.userId);
     if (me === targetId) return reply.code(400).send();
-
+    
+    if (await isBlocked(me, targetId)) {
+      return reply.code(403).send({ error: "BLOCKED" });
+    }
     // empêche doublon
     const existing = await prisma.friendship.findFirst({
       where: {
@@ -213,6 +224,9 @@ async function start() {
     // WS notify receiver
     for (const [socket, uid] of onlineSockets.entries()) {
       if (uid === targetId && socket.readyState === 1) {
+
+        if (await isBlocked(me, targetId)) return;
+
         socket.send(JSON.stringify({
           type: "FRIEND_REQUEST",
           from: { id: me }
@@ -224,10 +238,16 @@ async function start() {
   });
 
   fastify.post("/friends/accept/:userId", async (req, reply) => {
+
+    
     const me = getUserIdFromAuth(req, reply);
     if (!me) return;
-
+    
     const fromId = Number(req.params.userId);
+    
+    if (await isBlocked(me, fromId)) {
+      return reply.code(403).send();
+    }
 
     await prisma.friendship.update({
       where: {
@@ -256,6 +276,9 @@ async function start() {
 
     for (const [socket, uid] of onlineSockets.entries()) {
       if (uid === fromId && socket.readyState === 1) {
+
+        if (await isBlocked(me, fromId)) return;
+
         socket.send(JSON.stringify({
           type: "FRIEND_ACCEPTED",
           user: meUser
@@ -274,10 +297,15 @@ async function start() {
 
 
   fastify.post("/friends/refuse/:userId", async (req, reply) => {
+
     const me = getUserIdFromAuth(req, reply);
     if (!me) return;
-
+    
     const fromId = Number(req.params.userId);
+    
+    if (await isBlocked(me, fromId)) {
+      return reply.code(403).send();
+    }
 
     await prisma.friendship.delete({
       where: {
@@ -357,6 +385,85 @@ async function start() {
 
     return reqs.map(r => r.requester);
   });
+
+  /* ===========================
+    HANDLE BLACKLIST
+    =========================== */
+
+  fastify.post("/user/:id/block", async (req, reply) => {
+    const me = getUserIdFromAuth(req, reply);
+    if (!me) return;
+
+    const targetId = Number(req.params.id);
+    if (me === targetId) return reply.code(400).send();
+
+    // supprime amitié si existe
+    await prisma.friendship.deleteMany({
+      where: {
+        OR: [
+          { requesterId: me, receiverId: targetId },
+          { requesterId: targetId, receiverId: me }
+        ]
+      }
+    });
+
+    await prisma.block.upsert({
+      where: {
+        blockerId_blockedId: {
+          blockerId: me,
+          blockedId: targetId
+        }
+      },
+      update: {},
+      create: {
+        blockerId: me,
+        blockedId: targetId
+      }
+    });
+
+    return { ok: true };
+  });
+
+  fastify.post("/user/:id/unblock", async (req, reply) => {
+    const me = getUserIdFromAuth(req, reply);
+    if (!me) return;
+
+    const targetId = Number(req.params.id);
+
+    await prisma.block.deleteMany({
+      where: { blockerId: me, blockedId: targetId }
+    });
+
+    return { ok: true };
+  });
+
+  fastify.get("/user/blocked", async (req, reply) => {
+    const me = getUserIdFromAuth(req, reply);
+    if (!me) return;
+
+    const blocks = await prisma.block.findMany({
+      where: { blockerId: me },
+      include: {
+        blocked: { select: { id: true, nickname: true } }
+      }
+    });
+
+    return blocks.map(b => b.blocked);
+  });
+
+  /* ======BLOQUER LES ACTIONS=====*/
+  async function isBlocked(a, b) {
+    const block = await prisma.block.findFirst({
+      where: {
+        OR: [
+          { blockerId: a, blockedId: b },
+          { blockerId: b, blockedId: a }
+        ]
+      }
+    });
+    return !!block;
+  }
+
   /* ===========================
       START
      =========================== */
