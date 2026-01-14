@@ -54,8 +54,8 @@ async function start() {
   const fastify = Fastify({
     logger: true,
     https: {
-      key: fs.readFileSync("/app/backend/certs/key.pem"),
-      cert: fs.readFileSync("/app/backend/certs/cert.pem"),
+      key: fs.readFileSync("/certs/key.pem"),
+      cert: fs.readFileSync("/certs/cert.pem"),
     },
   });
 

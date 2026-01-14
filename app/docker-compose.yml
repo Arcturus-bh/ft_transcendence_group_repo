@@ -1,16 +1,18 @@
 volumes:
   backend_db:
 
+  
 services:
-  frontend:
-    restart: always
-    build: ./frontend
-    container_name: front
-    image: front
+  nginx:
+    container_name: nginx
+    image: nginx:1.23-alpine  # not the latest version
+    volumes:
+      - ./nginx/conf.d:/etc/nginx/conf.d:ro  # ro -> read only
+      - ./certs:/etc/nginx/ssl:ro
     ports:
-      - "8080:8080"
-    # env_file:
-    #   - .env
+      - "443:443"
+      - "80:80"
+
 
   backend:
     restart: always
@@ -23,5 +25,16 @@ services:
       DATABASE_URL: file:/app/backend/prisma/prisma/dev.db
     volumes:
       - backend_db:/app/backend/prisma
+      - ./certs:/certs:ro
+    # env_file:
+    #   - .env
+  
+  frontend:
+    restart: always
+    build: ./frontend
+    container_name: front
+    image: front
+    ports:
+      - "8080:8080"
     # env_file:
     #   - .env
