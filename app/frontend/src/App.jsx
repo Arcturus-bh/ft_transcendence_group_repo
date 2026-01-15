@@ -4,10 +4,10 @@
 import React, { useEffect, useRef, useState } from "react";
 /*  Routes / Route : routing
     useNavigate : programmatic navigation */
-import { Routes, Route, useNavigate, Link } from "react-router-dom";
+import { Routes, Route, useNavigate, Link, useLocation, useParams } from "react-router-dom";
 
-/*  useLocation : know the current URL */
-import { useLocation } from "react-router-dom";
+// /*  useLocation : know the current URL */
+// import { useLocation } from "react-router-dom";
 
 /* Centralized keys for localStorage */
 const LOGIN_KEY = "auth_login";
@@ -141,7 +141,7 @@ export default function App() {
     const token = localStorage.getItem(AUTH_KEY);
     if (!token) return;
 
-    const res = await fetch("https://localhost:3000/user/me/settings", {
+    const res = await fetch("/api/user/me/settings", {
       headers: {
         Authorization: `Bearer ${token}`,
       },
@@ -160,7 +160,7 @@ export default function App() {
     const token = localStorage.getItem(AUTH_KEY);
     if (!token) return;
 
-    const res = await fetch("https://localhost:3000/user/me/settings", {
+    const res = await fetch("/api/user/me/settings", {
       method: "PUT",
       headers: {
         "Content-Type": "application/json",
@@ -214,7 +214,7 @@ export default function App() {
   const handleSubmitLogin = async (e) => {
     e.preventDefault();
       try {
-        const res = await fetch("https://localhost:3000/auth/login", {
+        const res = await fetch("/api/auth/login", {
           method: "POST",
           headers: {
             "Content-Type": "application/json",
@@ -254,7 +254,7 @@ export default function App() {
   const handleSubmitSub = async (e) => {
     e.preventDefault();
       try {
-        const res = await fetch("https://localhost:3000/auth/register", {
+        const res = await fetch("/api/auth/register", {
           method: "POST",
           headers: {
             "Content-Type": "application/json",
@@ -301,7 +301,7 @@ export default function App() {
     reader.onload = async () => {
       const avatarBase64 = reader.result;
 
-      await fetch("https://localhost:3000/user/me/avatar", {
+      await fetch("/api/user/me/avatar", {
         method: "POST",
         headers: { "Content-Type": "application/json",
           Authorization: `Bearer ${localStorage.getItem("auth_token")}`,
@@ -318,7 +318,7 @@ export default function App() {
     const token = localStorage.getItem(AUTH_KEY);
     if (!token) return;
 
-    fetch("https://localhost:3000/user/me/avatar", {
+    fetch("/api/user/me/avatar", {
       headers: {
         Authorization: `Bearer ${token}`,
       },
@@ -337,7 +337,7 @@ export default function App() {
 
   const handleLogout = async () => {
     wsRef.current?.close();
-    await fetch("https://localhost:3000/auth/logout", {
+    await fetch("/api/auth/logout", {
       method: "POST",
       headers: {
         Authorization: `Bearer ${localStorage.getItem("auth_token")}`,
@@ -355,7 +355,7 @@ export default function App() {
   useEffect(() => {
     if (!showChat || userTab !== "friends") return;
 
-    fetch("https://localhost:3000/friends", {
+    fetch("/api/friends", {
       headers: {
         Authorization: `Bearer ${localStorage.getItem("auth_token")}`,
       },
@@ -376,7 +376,7 @@ export default function App() {
     const token = localStorage.getItem(AUTH_KEY);
     if (!token) return;
 
-    fetch("https://localhost:3000/users", {
+    fetch("/api/users", {
       headers: { Authorization: `Bearer ${token}` },
     })
       .then((r) => r.json())
@@ -384,7 +384,7 @@ export default function App() {
       .catch(() => {});
 
     const ws = new WebSocket(
-      `wss://localhost:3000/ws?token=${token}`
+      `wss://${window.location.host}/ws?token=${token}`
     );
     wsRef.current = ws;
 
@@ -454,7 +454,7 @@ export default function App() {
   useEffect(() => {
     if (!showChat || userTab !== "requests") return;
 
-    fetch("https://localhost:3000/friends/requests", {
+    fetch("/api/friends/requests", {
       headers: {
         Authorization: `Bearer ${localStorage.getItem("auth_token")}`,
       },
@@ -482,7 +482,7 @@ export default function App() {
   useEffect(() => {
     if (!showChat) return;
 
-    fetch("https://localhost:3000/user/blocked", {
+    fetch("/api/user/blocked", {
       headers: {
         Authorization: `Bearer ${localStorage.getItem("auth_token")}`,
       },
@@ -519,7 +519,7 @@ export default function App() {
   };
 
   const handleSendFriendRequest = async () => {
-    await fetch(`https://localhost:3000/friends/request/${selectedUser.id}`, {
+    await fetch(`/api/friends/request/${selectedUser.id}`, {
       method: "POST",
       headers: {
         Authorization: `Bearer ${localStorage.getItem("auth_token")}`,
@@ -531,7 +531,7 @@ export default function App() {
   };
 
   const handleAcceptFriend = async (userId) => {
-    await fetch(`https://localhost:3000/friends/accept/${userId}`, {
+    await fetch(`/api/friends/accept/${userId}`, {
       method: "POST",
       headers: {
         Authorization: `Bearer ${localStorage.getItem("auth_token")}`,
@@ -558,7 +558,7 @@ export default function App() {
 
 
   const handleRefuseFriend = async (userId) => {
-    await fetch(`https://localhost:3000/friends/refuse/${userId}`, {
+    await fetch(`/api/friends/refuse/${userId}`, {
       method: "POST",
       headers: {
         Authorization: `Bearer ${localStorage.getItem("auth_token")}`,
@@ -567,7 +567,7 @@ export default function App() {
   };
 
   const handleRemoveFriend = async () => {
-    await fetch(`https://localhost:3000/friends/${selectedUser.id}`, {
+    await fetch(`/api/friends/${selectedUser.id}`, {
       method: "DELETE",
       headers: {
         Authorization: `Bearer ${localStorage.getItem("auth_token")}`,
@@ -600,7 +600,7 @@ export default function App() {
   // };
 
   const handleBlock = async () => {
-    await fetch(`https://localhost:3000/user/${selectedUser.id}/block`, {
+    await fetch(`/api/user/${selectedUser.id}/block`, {
       method: "POST",
       headers: {
         Authorization: `Bearer ${localStorage.getItem("auth_token")}`,
@@ -614,6 +614,64 @@ export default function App() {
   //     refreshFriends();
   //   }
   // }, [showChat, userTab]);
+
+  function PublicProfile() {
+    const { id } = useParams();
+    const navigate = useNavigate();
+    const location = useLocation();
+    const from = location.state?.from || "/dashboard";
+    const [user, setUser] = useState(null);
+
+    useEffect(() => {
+      if (!authUserId) return;
+      if (String(id) === String(authUserId)) {
+        navigate("/profile");
+      }
+    }, [id, authUserId, navigate]);
+
+    useEffect(() => {
+      fetch(`/api/users/${id}`, {
+        headers: {
+          Authorization: `Bearer ${localStorage.getItem("auth_token")}`,
+        },
+      })
+        .then(res => res.json())
+        .then(setUser)
+        .catch(console.error);
+    }, [id]);
+
+    if (!user) {
+      return (
+        <div className="w-full h-full flex items-center justify-center text-cyan-300">
+          Loading profile…
+        </div>
+      );
+    }
+
+    return (
+      <div className="w-full h-full flex flex-col items-center text-white">
+        <button
+          className="absolute top-4 left-4 neon-border px-2 py-1"
+          onClick={() => navigate(from)}
+        >
+          ← 𝔹𝔸ℂ𝕂
+        </button>
+
+        <img
+          src={user.avatar || "/images/default-avatar.png"}
+          className="w-32 h-32 rounded-full neon-border mt-[15vh]"
+        />
+
+        <h1 className="neon-glitch text-3xl mt-6">
+          {user.nickname}
+        </h1>
+
+        <p className="text-cyan-300 mt-2">
+          {user.online ? "● Online" : "○ Offline"}
+        </p>
+      </div>
+    );
+  }
 
 /* ================================================================================= */
 /* ================================================================================= */
@@ -946,6 +1004,22 @@ export default function App() {
             )}
 
             {/* =============================================
+                ================ VIEW PROFILE ===============
+                ============================================= */}
+
+            <button
+              onClick={() => {
+                navigate(`/profile/${selectedUser.id}`, {
+                  state: { from: location.pathname }
+                });
+                closeUserMenu();
+              }}
+              className="block w-full px-2 py-1 hover:bg-cyan-500/20 text-left text-white"
+            >
+              View profile 👁
+            </button>
+
+            {/* =============================================
                 ================ HANDLE BLOCK ===============
                 ============================================= */}
 
@@ -953,7 +1027,7 @@ export default function App() {
               <button
                 onClick={async () => {
                   await fetch(
-                    `https://localhost:3000/user/${selectedUser.id}/block`,
+                    `/api/user/${selectedUser.id}/block`,
                     {
                       method: "POST",
                       headers: {
@@ -972,7 +1046,7 @@ export default function App() {
               <button
                 onClick={async () => {
                   await fetch(
-                    `https://localhost:3000/user/${selectedUser.id}/unblock`,
+                    `/api/user/${selectedUser.id}/unblock`,
                     {
                       method: "POST",
                       headers: {
@@ -1309,6 +1383,8 @@ export default function App() {
   ======================================== PROFIL ======================================
   ====================================================================================== 
   ======================================================================================*/}
+
+        <Route path="/profile/:id" element={<PublicProfile />} />
 
         <Route path="/profile" element={
           <div className="w-full h-full relative overflow-hidden">
