@@ -59,6 +59,10 @@ function useAuth() {
   return { isAuthed, login, signIn, signOut };
 }
 
+function Loading() {
+  return <div className="text-white">Loading...</div>;
+}
+
 /* ================================================================================= */
 /* ================================================================================= */
 /* ====================================== APP ====================================== */
@@ -125,6 +129,8 @@ export default function App() {
 
   const isBlockedUser = (id) =>
   blockedUsers.some(u => u.id === id);
+
+  const usersInitialized = useRef(false);
 
 /* ================================================================================= */
 /* ================================================================================= */
@@ -272,7 +278,7 @@ export default function App() {
         }
 
         if (!res.ok) {
-          notify("User already exist");
+          notify(data?.message || "User already exists");
           return;
         }
         
@@ -376,15 +382,20 @@ export default function App() {
     const token = localStorage.getItem(AUTH_KEY);
     if (!token) return;
 
+    if (usersInitialized.current) return;
+
     fetch("/api/users", {
       headers: { Authorization: `Bearer ${token}` },
     })
-      .then((r) => r.json())
-      .then(setUsers)
+      .then(r => r.json())
+      .then(data => {
+        setUsers(data);
+      })
       .catch(() => {});
+      usersInitialized.current = true;
 
     const ws = new WebSocket(
-      `wss://${window.location.host}/ws?token=${token}`
+      `wss://${window.location.host}/api/ws?token=${token}`
     );
     wsRef.current = ws;
 
@@ -393,14 +404,14 @@ export default function App() {
 
       switch (msg.type) {
 
-        case "USERS_STATUS":
-          setUsers(prev =>
-            prev.map(u => ({
-              ...u,
-              online: msg.onlineUsers.includes(u.id),
-            }))
-          );
-          break;
+      case "USERS_STATUS":
+        setUsers(prev =>
+          prev.map(u => ({
+            ...u,
+            online: msg.onlineUsers.includes(u.id),
+          }))
+        );
+        break;
 
         case "FRIEND_REQUEST":
           setFriendRequests(prev => {
@@ -429,6 +440,13 @@ export default function App() {
           setFriends(prev =>
             prev.filter(f => f.id !== msg.userId)
           );
+
+          setUsers(prev =>
+            prev.map(u =>
+              u.id === msg.userId ? { ...u, online: false } : u
+            )
+          );
+
           setActiveChatUser(prev =>
             prev?.id === msg.userId ? null : prev
           );
@@ -555,8 +573,6 @@ export default function App() {
     //   });
   };
 
-
-
   const handleRefuseFriend = async (userId) => {
     await fetch(`/api/friends/refuse/${userId}`, {
       method: "POST",
@@ -564,6 +580,10 @@ export default function App() {
         Authorization: `Bearer ${localStorage.getItem("auth_token")}`,
       },
     });
+
+    setFriendRequests(prev =>
+      prev.filter(u => u.id !== userId)
+    );
   };
 
   const handleRemoveFriend = async () => {
@@ -620,32 +640,34 @@ export default function App() {
     const navigate = useNavigate();
     const location = useLocation();
     const from = location.state?.from || "/dashboard";
-    const [user, setUser] = useState(null);
+    const [user, setUser] = useState(undefined);
 
     useEffect(() => {
-      if (!authUserId) return;
-      if (String(id) === String(authUserId)) {
+      if (String(id) === String(localStorage.getItem(USER_ID_KEY))) {
         navigate("/profile");
+        return;
       }
-    }, [id, authUserId, navigate]);
 
-    useEffect(() => {
-      fetch(`/api/users/${id}`, {
+      fetch(`/api/users/${id}/profile`, {
         headers: {
           Authorization: `Bearer ${localStorage.getItem("auth_token")}`,
         },
       })
-        .then(res => res.json())
+        .then(async res => {
+          if (!res.ok) throw new Error("PROFILE_NOT_FOUND");
+          return res.json();
+        })
         .then(setUser)
-        .catch(console.error);
+        .catch(() => setUser(null));
     }, [id]);
 
-    if (!user) {
-      return (
-        <div className="w-full h-full flex items-center justify-center text-cyan-300">
-          Loading profile…
-        </div>
-      );
+
+    if (user === undefined) {
+      return <div className="text-white">Loading...</div>;
+    }
+
+    if (user === null) {
+      return <div className="text-red-400">Profile not found</div>;
     }
 
     return (
@@ -1384,7 +1406,14 @@ export default function App() {
   ====================================================================================== 
   ======================================================================================*/}
 
-        <Route path="/profile/:id" element={<PublicProfile />} />
+        <Route
+          path="/profile/:id"
+          element={
+            <div className="relative w-full h-full z-30">
+              <PublicProfile />
+            </div>
+          }
+        />
 
         <Route path="/profile" element={
           <div className="w-full h-full relative overflow-hidden">
