@@ -661,92 +661,114 @@ export default function App() {
   //   }
   // }, [showChat, userTab]);
 
-  function PublicProfile() {
-    const { id } = useParams();
-    const navigate = useNavigate();
-    const location = useLocation();
-    const from = location.state?.from || "/dashboard";
-    const [user, setUser] = useState(undefined);
+function PublicProfile() {
+  const { id } = useParams();
+  const navigate = useNavigate();
+  const location = useLocation();
+  const from = location.state?.from || "/dashboard";
 
-    // FETCH INITIAL
-    useEffect(() => {
-      if (String(id) === String(localStorage.getItem(USER_ID_KEY))) {
-        navigate("/profile");
-        return;
-      }
+  const [user, setUser] = useState(undefined);
+  const isMe = String(id) === String(localStorage.getItem(USER_ID_KEY));
 
-      fetch(`/api/users/${id}/profile`, {
-        headers: {
-          Authorization: `Bearer ${localStorage.getItem("auth_token")}`,
-        },
+  // FETCH PROFIL UNIQUEMENT SI PAS MOI
+  useEffect(() => {
+    if (isMe) {
+      setUser(null);
+      return;
+    }
+
+    fetch(`/api/users/${id}/profile`, {
+      headers: {
+        Authorization: `Bearer ${localStorage.getItem("auth_token")}`,
+      },
+    })
+      .then(res => {
+        if (!res.ok) throw new Error("PROFILE_NOT_FOUND");
+        return res.json();
       })
-        .then(res => {
-          if (!res.ok) throw new Error("PROFILE_NOT_FOUND");
-          return res.json();
-        })
-        .then(setUser)
-        .catch(() => setUser(null));
-    }, [id]);
+      .then(setUser)
+      .catch(() => setUser(null));
+  }, [id, isMe]);
 
-    useEffect(() => {
-      const ws = wsRef.current;
-      if (!ws) return;
+  // SYNC ONLINE STATUS
+  useEffect(() => {
+    const ws = wsRef.current;
+    if (!ws || isMe) return;
 
-      const handler = (event) => {
-        const msg = JSON.parse(event.data);
-        if (msg.type === "USERS_STATUS") {
-          setUser(u =>
-            u ? { ...u, online: msg.onlineUsers.includes(u.id) } : u
-          );
-        }
-      };
+    const handler = (event) => {
+      const msg = JSON.parse(event.data);
+      if (msg.type === "USERS_STATUS") {
+        setUser(u =>
+          u ? { ...u, online: msg.onlineUsers.includes(u.id) } : u
+        );
+      }
+    };
 
-      ws.addEventListener("message", handler);
-      return () => ws.removeEventListener("message", handler);
-    }, []);
+    ws.addEventListener("message", handler);
+    return () => ws.removeEventListener("message", handler);
+  }, [isMe]);
 
-    if (user === undefined) {
-      return <div className="text-white">Loading...</div>;
-    }
+  // ===== RENDER =====
 
-    if (user === null) {
-      return <div className="text-red-400">Profile not found</div>;
-    }
-
+  if (isMe) {
     return (
       <div className="w-full h-full flex flex-col items-center text-white">
         <button
           className="absolute top-4 left-4 neon-border px-2 py-1"
-          onClick={() => navigate(from)}
+          onClick={() => navigate("/dashboard")}
         >
           ← 𝔹𝔸ℂ𝕂
         </button>
 
-        <img
-          src={user.avatar || "/images/default-avatar.png"}
-          className="w-32 h-32 rounded-full neon-border mt-[15vh]"
-        />
-
-        <h1 className="neon-glitch text-3xl mt-6">
-          {user.nickname}
-        </h1>
-
-        <p className="text-cyan-300 mt-2 flex items-center gap-2">
-          {user.online ? (
-            <>
-              <span className="w-2 h-2 rounded-full bg-green-400" />
-              Online
-            </>
-          ) : (
-            <>
-              <span className="w-2 h-2 rounded-full bg-gray-400" />
-              Offline
-            </>
-          )}
+        <p className="mt-[20vh] text-cyan-300">
+          This is your own profile
         </p>
       </div>
     );
   }
+
+  if (user === undefined) {
+    return <div className="text-white">Loading...</div>;
+  }
+
+  if (user === null) {
+    return <div className="text-red-400">Profile not found</div>;
+  }
+
+  return (
+    <div className="w-full h-full flex flex-col items-center text-white">
+      <button
+        className="absolute top-4 left-4 neon-border px-2 py-1"
+        onClick={() => navigate(from)}
+      >
+        ← 𝔹𝔸ℂ𝕂
+      </button>
+
+      <img
+        src={user.avatar || "/images/default-avatar.png"}
+        className="w-32 h-32 rounded-full neon-border mt-[15vh]"
+      />
+
+      <h1 className="neon-glitch text-3xl mt-6">
+        {user.nickname}
+      </h1>
+
+      <p className="text-cyan-300 mt-2 flex items-center gap-2">
+        {user.online ? (
+          <>
+            <span className="w-2 h-2 rounded-full bg-green-400" />
+            Online
+          </>
+        ) : (
+          <>
+            <span className="w-2 h-2 rounded-full bg-gray-400" />
+            Offline
+          </>
+        )}
+      </p>
+    </div>
+  );
+}
 
 /* ================================================================================= */
 /* ================================================================================= */
@@ -795,7 +817,7 @@ export default function App() {
 /* ================================================================================= */
 
   return (
-    <div id="app" className="w-screen h-screen">
+    <div id="app" className="relative min-h-screen flex flex-col">
 
       {notification && (
         <div className="fixed inset-0 z-[99999] flex items-center justify-center">
@@ -822,16 +844,10 @@ export default function App() {
         </div>
       )}
 
-      <footer className="absolute top-[880px] left-1/2 -translate-x-1/2
-        text-xs text-cyan-300 neon-glitch z-50">
-        <Link to="/privacy">Privacy Policy</Link>
-          {" | "}
-        <Link to="/terms">Terms of Service</Link>
-      </footer>
 
       <img
         src={bgSrc}
-        className="absolute inset-0 w-full h-full object-cover z-0 pointer-events-none"
+        className="absolute inset-0 w-full h-full object-cover -z-10 pointer-events-none"
         alt=""
       />
 
@@ -1148,6 +1164,7 @@ export default function App() {
   ====================================================================================== 
   ======================================================================================*/}
 
+        {/* <main className="flex-1 flex flex-col"> */}
         <Routes>
           <Route path="/" element={
             <div className="w-full h-full flex flex-col items-center">
@@ -1585,7 +1602,16 @@ export default function App() {
             </button>
           </div>
         } />
+
       </Routes>
+      {/* </main>
+      <footer className="mt-auto w-full py-4 flex justify-center text-xs sm:text-sm text-cyan-300">
+        <div className="flex gap-2 neon-glitch text-center">
+          <Link to="/privacy">Privacy Policy</Link>
+          <span>|</span>
+          <Link to="/terms">Terms of Service</Link>
+        </div>
+      </footer> */}
     </div>
   );
 }
