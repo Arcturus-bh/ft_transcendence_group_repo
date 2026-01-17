@@ -130,8 +130,6 @@ export default function App() {
   const isBlockedUser = (id) =>
   blockedUsers.some(u => u.id === id);
 
-  const usersInitialized = useRef(false);
-
 /* ================================================================================= */
 /* ================================================================================= */
 /* ============================ HANDLE BACKGROUND ================================== */
@@ -343,17 +341,40 @@ export default function App() {
 
   const handleLogout = async () => {
     wsRef.current?.close();
+    wsRef.current = null;
+
     await fetch("/api/auth/logout", {
       method: "POST",
       headers: {
         Authorization: `Bearer ${localStorage.getItem("auth_token")}`,
       },
     });
+
+    setShowChat(false);
+    setActiveChatUser(null);
+    setSelectedUser(null);
     setAuthUserId(null);
     setBgSrc(DEFAULT_BG);
+
     signOut();
     navigate("/");
   };
+  //
+  //
+  useEffect(() => {
+    if (!isAuthed) {
+      setShowChat(false);
+      setActiveChatUser(null);
+      setSelectedUser(null);
+      setUsers([]);
+      setFriends([]);
+      setFriendRequests([]);
+      setBlockedUsers([]);
+      setMessages({});
+    }
+  }, [isAuthed]);
+//
+//
 
   //
   //
@@ -382,17 +403,13 @@ export default function App() {
     const token = localStorage.getItem(AUTH_KEY);
     if (!token) return;
 
-    if (usersInitialized.current) return;
-
     fetch("/api/users", {
-      headers: { Authorization: `Bearer ${token}` },
+      headers: { Authorization: `Bearer ${localStorage.getItem(AUTH_KEY)}`,
+      },
     })
-      .then(r => r.json())
-      .then(data => {
-        setUsers(data);
-      })
-      .catch(() => {});
-      usersInitialized.current = true;
+    .then(res => res.json())
+    .then(setUsers)
+    .catch(() => setUsers([]));
 
     const ws = new WebSocket(
       `wss://${window.location.host}/api/ws?token=${token}`
@@ -405,12 +422,22 @@ export default function App() {
       switch (msg.type) {
 
         case "USERS_STATUS":
-          setUsers(prev =>
-            prev.map(u => ({
+          setUsers(prev => {
+            const map = new Map(prev.map(u => [u.id, u]));
+
+            msg.onlineUsers.forEach(id => {
+              if (map.has(id)) {
+                map.set(id, { ...map.get(id), online: true });
+              } else {
+                map.set(id, { id, nickname: `user_${id}`, online: true });
+              }
+            });
+
+            return Array.from(map.values()).map(u => ({
               ...u,
               online: msg.onlineUsers.includes(u.id),
-            }))
-          );
+            }));
+          });
           break;
 
         case "FRIEND_REQUEST":
@@ -440,23 +467,22 @@ export default function App() {
           setFriends(prev =>
             prev.filter(f => f.id !== msg.userId)
           );
-
           setUsers(prev =>
             prev.map(u =>
               u.id === msg.userId ? { ...u, online: false } : u
             )
           );
-
           setActiveChatUser(prev =>
             prev?.id === msg.userId ? null : prev
           );
           break;
-
+        
         default:
           break;
       }
     };
 
+        
     ws.onclose = () => {
       if (wsRef.current === ws) wsRef.current = null;
     };
@@ -662,25 +688,21 @@ export default function App() {
         .catch(() => setUser(null));
     }, [id]);
 
-    // 🔥 SYNC ONLINE STATUS VIA WS
     useEffect(() => {
       const ws = wsRef.current;
       if (!ws) return;
 
-      const onMessage = (event) => {
+      const handler = (event) => {
         const msg = JSON.parse(event.data);
-
         if (msg.type === "USERS_STATUS") {
-          setUser(prev =>
-            prev
-              ? { ...prev, online: msg.onlineUsers.includes(prev.id) }
-              : prev
+          setUser(u =>
+            u ? { ...u, online: msg.onlineUsers.includes(u.id) } : u
           );
         }
       };
 
-      ws.addEventListener("message", onMessage);
-      return () => ws.removeEventListener("message", onMessage);
+      ws.addEventListener("message", handler);
+      return () => ws.removeEventListener("message", handler);
     }, []);
 
     if (user === undefined) {

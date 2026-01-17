@@ -135,7 +135,7 @@ async function start() {
      WEBSOCKET
      =========================== */
 
-  fastify.get("/ws", { websocket: true }, (connection, req) => {
+  function handleWs(connection, req) {
     const token = new URL(req.url, "http://localhost").searchParams.get("token");
 
     if (!token || !token.startsWith("DEV_TOKEN_")) {
@@ -149,6 +149,14 @@ async function start() {
       return;
     }
 
+    // ⚠️ Empêche doublons (multi-onglets)
+    for (const [socket, uid] of onlineSockets.entries()) {
+      if (uid === userId) {
+        socket.close();
+        onlineSockets.delete(socket);
+      }
+    }
+
     onlineSockets.set(connection.socket, userId);
     broadcastUsers();
 
@@ -156,7 +164,11 @@ async function start() {
       onlineSockets.delete(connection.socket);
       broadcastUsers();
     });
-  });
+  }
+
+
+  fastify.get("/ws", { websocket: true }, handleWs);
+  fastify.get("/api/ws", { websocket: true }, handleWs);
 
   /* ===========================
      USER SETTINGS
